@@ -140,16 +140,34 @@
   };
 
   // An internal function for creating assigner functions.
+  // 有三个方法用到了这个内部函数
+  // _.extend _.extendOwn _.defaults
   var createAssigner = function(keysFunc, undefinedOnly) {
+    // 返回函数
+    // 经典闭包（undefinedOnly 在返回的函数内引用）
     return function(obj) {
       var length = arguments.length;
       if (length < 2 || obj == null) return obj;
+
+      // 枚举第一个参数除外的对象
+      // 即 arguments[1], arguments[2] ...
       for (var index = 1; index < length; index++) {
+        // source 即为对象参数
         var source = arguments[index],
+            // 提取对象参数的 keys 值
+            // _.keys 或者 _.allKeys
             keys = keysFunc(source),
             l = keys.length;
+
+        // 遍历该对象的键值对
         for (var i = 0; i < l; i++) {
           var key = keys[i];
+          // _.extend 和 _.extendOwn 方法
+          // 没有传入 undefinedOnly 参数，即 !undefinedOnly 为 true
+          // obj[key] = source[key] 后面对象的键值对直接覆盖 obj
+          // _.defaults 方法，undefinedOnly 参数为 true
+          // 那么当且仅当 obj[key] 为 undefined 时才覆盖
+          // 即如果有相同的 key 值，取最早出现的 value 值
           if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key];
         }
       }
@@ -1214,6 +1232,8 @@
   // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
   // IE < 9 下 不能用 for key in .. 来枚举对象的某些 key
   // 比如重写了对象的 `toString` 方法，这个 key 值就不能在 IE < 9 下用 for in 枚举到
+  // IE < 9，{toString: null}.propertyIsEnumerable('toString') 返回 false
+  // IE < 9，重写的 `toString` 属性被认为不可枚举
   var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
 
   // IE < 9 下不能用 for in 来枚举的 key 值集合
@@ -1223,6 +1243,7 @@
   function collectNonEnumProps(obj, keys) {
     var nonEnumIdx = nonEnumerableProps.length;
     var constructor = obj.constructor;
+    // proto 是否是继承的 prototype
     var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
 
     // Constructor is a special case.
@@ -1232,8 +1253,8 @@
     // 存入数组
     var prop = 'constructor';
     if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
-
-    // 其他 nonEnumerableProps 数组中的 keys
+    
+    // nonEnumerableProps 数组中的 keys
     while (nonEnumIdx--) {
       prop = nonEnumerableProps[nonEnumIdx];
       if (prop in obj && obj[prop] !== proto[prop] && !_.contains(keys, prop)) {
@@ -1257,13 +1278,13 @@
     var keys = [];
 
     // own enumerable properties
-    for (var key in obj) 
+    for (var key in obj) // hasOwnProperty
       if (_.has(obj, key)) keys.push(key);
 
     // Ahem, IE < 9.
     // IE < 9 下不能用 for in 来枚举某些 key 值
     // 传入 keys 数组为参数
-    // 因为 JavaScript 下函数按值传递
+    // 因为 JavaScript 下函数参数按值传递
     // 所以 keys 当做参数传入后会在 `collectNonEnumProps` 方法中改变值
     if (hasEnumBug) collectNonEnumProps(obj, keys);
     
@@ -1371,13 +1392,19 @@
   };
 
   // Extend a given object with all the properties in passed-in object(s).
+  // extend_.extend(destination, *sources) 
+  // Copy all of the properties in the source objects over to the destination object
+  // and return the destination object
+  // It's in-order, so the last source will override properties of the same name in previous arguments.
   // 将一个对象上的所有键值对添加到另一个对象上
   // 因为 key 值可能会相同，所以后面的可能会覆盖前面的
+  // 参数个数 >= 1 
   _.extend = createAssigner(_.allKeys);
 
   // Assigns a given object with all the own properties in the passed-in object(s)
   // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
-  // 跟 extend 方法类似，但是只作用于 own properties
+  // 跟 extend 方法类似，但是只把 own properties 拷贝给第一个参数对象
+  // 参数个数 >= 1
   _.extendOwn = _.assign = createAssigner(_.keys);
 
   // Returns the first key on an object that passes a predicate test
@@ -1444,6 +1471,10 @@
   };
 
   // Fill in a given object with default properties.
+  // 和 _.extend 非常类似
+  // 区别是 _.extend 如果有相同的 key，则后者覆盖前者
+  // 而 _.defaults 则是后者不覆盖前者
+  // 参数个数 >= 1
   _.defaults = createAssigner(_.allKeys, true);
 
   // Creates an object that inherits from the given prototype object.
