@@ -1512,6 +1512,15 @@
   // Invokes interceptor with the obj, and then returns obj.
   // The primary purpose of this method is to "tap into" a method chain, in
   // order to perform operations on intermediate results within the chain.
+  // _.chain([1,2,3,200])
+  // .filter(function(num) { return num % 2 == 0; })
+  // .tap(alert)
+  // .map(function(num) { return num * num })
+  // .value();
+  // => // [2, 200] (alerted)
+  // => [4, 40000]
+  // 主要是用在链式调用中
+  // 对中间值立即进行处理
   _.tap = function(obj, interceptor) {
     interceptor(obj);
     return obj;
@@ -1544,7 +1553,7 @@
     return true;
   };
 
-  
+
   // Internal recursive comparison function for `isEqual`.
   var eq = function(a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
