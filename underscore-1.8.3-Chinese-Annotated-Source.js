@@ -177,8 +177,12 @@
 
   // An internal function for creating a new object that inherits from another.
   var baseCreate = function(prototype) {
+    // 如果 prototype 参数不是对象
     if (!_.isObject(prototype)) return {};
+
+    // 如果浏览器支持 ES5 Object.create
     if (nativeCreate) return nativeCreate(prototype);
+
     Ctor.prototype = prototype;
     var result = new Ctor;
     Ctor.prototype = null;
@@ -1484,16 +1488,24 @@
   // 构造一个新的对象
   _.create = function(prototype, props) {
     var result = baseCreate(prototype);
+
+    // 将 props 的键值对覆盖 result 对象
     if (props) _.extendOwn(result, props);
     return result;
   };
 
   // Create a (shallow-cloned) duplicate of an object.
   // 对象的浅复制副本
-  // 所有嵌套的对象或者数组都会跟原对象用同一个引用
+  // 注意点：所有嵌套的对象或者数组都会跟原对象用同一个引用
   // 而不是新的副本
   _.clone = function(obj) {
+    // 容错，如果不是对象类型，则可以直接返回
+    // 因为一些基础类型是直接按值传递的
+    // 思考，arguments 呢？ Nodelist 呢？ HTML Collection 呢？
     if (!_.isObject(obj)) return obj;
+
+    // 如果是数组，则用 obj.slice() 返回数组副本
+    // 如果是对象，则提取所有 obj 的键值对覆盖空对象，返回
     return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
   };
 
@@ -1510,17 +1522,29 @@
   // 判断 obj 对象中是否有 attrs 中的所有 key-value 键值对
   // 返回布尔值
   _.isMatch = function(object, attrs) {
+    // 提取 attrs 对象的所有 keys
     var keys = _.keys(attrs), length = keys.length;
+
+    // 如果 object 为空
+    // 如果 attrs 为空对象，则返回 true
     if (object == null) return !length;
+
     var obj = Object(object);
+
+    // 遍历 attrs 对象键值对
     for (var i = 0; i < length; i++) {
       var key = keys[i];
+
+      // 如果 obj 对象没有 attrs 对象的某个 key
+      // 或者对于某个 key，它们的 value 值不同
+      // 则证明 object 并不拥有 attrs 的所有键值对
+      // 则返回 false
       if (attrs[key] !== obj[key] || !(key in obj)) return false;
     }
     return true;
   };
 
-
+  
   // Internal recursive comparison function for `isEqual`.
   var eq = function(a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
