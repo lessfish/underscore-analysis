@@ -444,15 +444,24 @@
   };
 
   // Invoke a method (with arguments) on every item in a collection.
+  // invoke_.invoke(list, methodName, *arguments) 
+  // Calls the method named by methodName on each value in the list.
+  // Any extra arguments passed to invoke will be forwarded on to the method invocation.
   // 数组或者对象中的每个元素都调用 method 方法
   // 返回调用后的结果（数组或者关联数组）
+  // method 参数后的参数会被当做参数传入 method 方法中
   _.invoke = function(obj, method) {
+    // method 之后的参数
     var args = slice.call(arguments, 2);
+
+    // 判断 method 是不是函数
     var isFunc = _.isFunction(method);
 
     // 用 map 方法对数组或者对象每个元素调用方法
     // 并且返回另一个数组（参数为数组）或者关联数组（参数为对象）
     return _.map(obj, function(value) {
+      // 如果 method 不是函数，则可能是 obj 的 key 值
+      // 而 obj[method] 可能为函数
       var func = isFunc ? method : value[method];
       return func == null ? func : func.apply(value, args);
     });
@@ -462,6 +471,13 @@
   // 一个数组，元素都是对象
   // 根据指定的 key 值
   // 返回一个数组，元素都是指定 key 值的 value 值
+  /*
+  var property = function(key) {
+    return function(obj) {
+      return obj == null ? void 0 : obj[key];
+    };
+  };
+  */
   _.pluck = function(obj, key) {
     return _.map(obj, _.property(key));
   };
@@ -1558,15 +1574,31 @@
   var eq = function(a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
     // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
+    // 当 a === b 时
+    // 如果 a !== 0，那么我们可以认为 a 和 b isEqual
+    // 如果 a === 0 && b === 0，也 isEqual 啊
+    // 可以判断 1 / a 是否等于 1 / b
+    // 如果相等，那么 a 和 b isEqual
     if (a === b) return a !== 0 || 1 / a === 1 / b;
+
     // A strict comparison is necessary because `null == undefined`.
+    // 如果 a 和 b 有一个为 null
+    // 判断 a === b
     if (a == null || b == null) return a === b;
+
     // Unwrap any wrapped objects.
+    // 如果 a 和 b 是 underscore OOP 的对象
+    // 那么比较 _wrapped 属性值
     if (a instanceof _) a = a._wrapped;
     if (b instanceof _) b = b._wrapped;
+
     // Compare `[[Class]]` names.
+    // 用 toString 方法获取 a 变量类型
     var className = toString.call(a);
+
+    // 如果两个参数类型不相同，则返回 false
     if (className !== toString.call(b)) return false;
+
     switch (className) {
       // Strings, numbers, regular expressions, dates, and booleans are compared by value.
       case '[object RegExp]':
@@ -1621,8 +1653,10 @@
     bStack.push(b);
 
     // Recursively compare objects and arrays.
+    // 递归比较
     if (areArrays) {
       // Compare array lengths to determine if a deep comparison is necessary.
+      // 根据 length 判断是否应该继续递归对比
       length = a.length;
       if (length !== b.length) return false;
       // Deep compare the contents, ignoring non-numeric properties.
