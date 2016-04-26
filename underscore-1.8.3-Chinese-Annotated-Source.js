@@ -1403,6 +1403,7 @@
   _.functions = _.methods = function(obj) {
     var names = [];
     // 似乎有问题 IE < 9？
+    // 应该是放弃了 IE < 9 可能对 `toString` 等方法的重写支持
     for (var key in obj) {
       // 如果某个 key 对应的 value 值类型是函数
       // 则将这个 key 值存入数组
@@ -1435,6 +1436,7 @@
   _.findKey = function(obj, predicate, context) {
     predicate = cb(predicate, context);
     var keys = _.keys(obj), key;
+    // 遍历
     for (var i = 0, length = keys.length; i < length; i++) {
       key = keys[i];
       // 符合条件，直接返回 key 值
@@ -1687,7 +1689,7 @@
   // 一个是否是另一个的深度克隆副本
   _.isEqual = function(a, b) {
     return eq(a, b);
-  };
+  };  
 
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
