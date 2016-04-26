@@ -3,6 +3,7 @@
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
 //     中文注释 by hanzichi @https://github.com/hanzichi
+//     Objects -> Arrays -> Collections -> Functions -> Utility
 
 (function() {
 
