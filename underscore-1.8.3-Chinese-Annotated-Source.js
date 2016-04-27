@@ -817,7 +817,10 @@
   // _.flatten([1, [2], [3, [[4]]]], true);
   // => [1, 2, 3, [[4]]];
   _.flatten = function(array, shallow) {
-    // false 为预留变量？
+    // array => 需要展开的数组
+    // shallow => 是否只展开一层
+    // false 为 flatten 函数 strict 变量
+    // 在这里并没有什么卵用
     return flatten(array, shallow, false);
   };
 
@@ -897,7 +900,11 @@
   _.difference = function(array) {
     // 将 others 数组展开
     // 深度展开
+    // strict 参数为 true
+    // 不可以这样用 _.difference([1, 2, 3, 4, 5], [5, 2], 10);
+    // 10 就会取不到
     var rest = flatten(arguments, true, true, 1);
+
     return _.filter(array, function(value){
       return !_.contains(rest, value);
     });
