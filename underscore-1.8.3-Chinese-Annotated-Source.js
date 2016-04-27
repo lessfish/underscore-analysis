@@ -771,23 +771,37 @@
   // Internal implementation of a recursive `flatten` function.
   // 递归调用数组，将数组展开
   // 即 [1, 2, [3, 4]] => [1, 2, 3, 4]
+  // flatten(arguments, true, true, 1)
+  // flatten(array, shallow, false)
+  // flatten(arguments, true, true)
+  // flatten(arguments, false, false, 1)
+  // input => 数组或者 arguments
+  // shallow => 是否只展开一层
+  // strict =>
+  // startIndex => 从 input 的第几项开始展开
   var flatten = function(input, shallow, strict, startIndex) {
+    // output 为展开后的数组
+    // idx 为 output 的累计数组下标
     var output = [], idx = 0;
+
     for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
       var value = input[i];
+      // 数组 或者 arguments
       if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
         //flatten current level of array or arguments object
+        // !shallow 为 true，则深度展开
         // 继续递归展开
         if (!shallow) value = flatten(value, shallow, strict);
 
         // 递归到最后一层
-        // 或者 shallow 为 true，只展开一层
+        // 或者 shallow 为 true => 只展开一层
         var j = 0, len = value.length;
         output.length += len;
+        // 将 value 数组的元素添加到 output 数组中
         while (j < len) {
           output[idx++] = value[j++];
         }
-      } else if (!strict) {
+      } else if (!strict) { 
         output[idx++] = value;
       }
     }
@@ -877,9 +891,12 @@
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
-  // 寻找几个数组中只出现一次的元素
-  // 将这些元素存入另一个数组中返回
+  // _.difference(array, *others) 
+  // Similar to without, but returns the values from array that are not present in the other arrays.
+  // 剔除 array 数组中在 others 数组中出现的元素
   _.difference = function(array) {
+    // 将 others 数组展开
+    // 深度展开
     var rest = flatten(arguments, true, true, 1);
     return _.filter(array, function(value){
       return !_.contains(rest, value);
@@ -1449,6 +1466,18 @@
   // 返回拥有一定键值对的对象副本
   // 第二个参数可以是一个 predicate 函数
   // 也可以是 key
+  // _.pick(object, *keys) 
+  // Return a copy of the object
+  // filtered to only have values for the whitelisted keys (or array of valid keys)
+  // Alternatively accepts a predicate indicating which keys to pick.
+  /*
+  _.pick({name: 'moe', age: 50, userid: 'moe1'}, 'name', 'age');
+  => {name: 'moe', age: 50}
+  _.pick({name: 'moe', age: 50, userid: 'moe1'}, function(value, key, object) {
+    return _.isNumber(value);
+  });
+  => {age: 50}
+  */
   _.pick = function(object, oiteratee, context) {
     // result 为返回的对象副本
     var result = {}, obj = object, iteratee, keys;
@@ -1461,7 +1490,11 @@
       keys = _.allKeys(obj);
       iteratee = optimizeCb(oiteratee, context);
     } else {
+      // 如果第二个参数不是函数
+      // 则后面的 keys 可能是数组
+      // 也可能是连续的几个并列的参数
       keys = flatten(arguments, false, false, 1);
+
       // 也转为 predicate 函数判断形式
       // 将指定 key 转化为 predicate 函数
       iteratee = function(value, key, obj) { return key in obj; };
