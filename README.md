@@ -8,7 +8,7 @@
 
 ### Articles（源码分析过程中的产物）
 
-- [为什么用 `void 0` 代替 `undefined`](https://github.com/hanzichi/underscore-analysis/issues/1)
+- [为什么用 void 0 代替 undefined](https://github.com/hanzichi/underscore-analysis/issues/1)
 
 
 
