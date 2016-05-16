@@ -777,7 +777,8 @@
   // flatten(arguments, false, false, 1)
   // input => 数组或者 arguments
   // shallow => 是否只展开一层
-  // strict =>
+  // strict => 为 true，说明需要展开的是纯数组
+  // strict => 为 false，说明需要保存的可能有单个键值
   // startIndex => 从 input 的第几项开始展开
   var flatten = function(input, shallow, strict, startIndex) {
     // output 为展开后的数组
