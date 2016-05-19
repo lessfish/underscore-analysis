@@ -1276,7 +1276,7 @@
   // ----------------
 
   // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
-  // IE < 9 下 不能用 for key in .. 来枚举对象的某些 key
+  // IE < 9 下 不能用 for key in ... 来枚举对象的某些 key
   // 比如重写了对象的 `toString` 方法，这个 key 值就不能在 IE < 9 下用 for in 枚举到
   // IE < 9，{toString: null}.propertyIsEnumerable('toString') 返回 false
   // IE < 9，重写的 `toString` 属性被认为不可枚举
@@ -1289,6 +1289,7 @@
   function collectNonEnumProps(obj, keys) {
     var nonEnumIdx = nonEnumerableProps.length;
     var constructor = obj.constructor;
+
     // proto 是否是继承的 prototype
     var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
 
@@ -1373,10 +1374,12 @@
 
   // Returns the results of applying the iteratee to each element of the object
   // In contrast to _.map it returns an object
-  // 专门为对象服务的 map 函数
-  // 迭代函数修改对象的 values 值
+  // 跟 _.map 方法很像
+  // 但是是专门为对象服务的 map 方法
+  // 迭代函数改变对象的 values 值
   // 返回对象副本
   _.mapObject = function(obj, iteratee, context) {
+    // 迭代函数
     iteratee = cb(iteratee, context);
     var keys =  _.keys(obj),
         length = keys.length,
@@ -1384,8 +1387,8 @@
         currentKey;
     for (var index = 0; index < length; index++) {
       currentKey = keys[index];
-      // 对每个 values 值进行迭代函数
-      // 返回经过函数后的值
+      // 对每个 value 值用迭代函数迭代
+      // 返回经过函数运算后的值
       results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
     }
     return results;
@@ -1408,7 +1411,8 @@
   // Invert the keys and values of an object. The values must be serializable.
   // 将一个对象的 key-value 键值对颠倒
   // 即原来的 key 为 value 值，原来的 value 值为 key 值
-  // 需要注意的是，原来对象的 value 值，必须是可以当 key 值的（比如不能是数字什么的），同时不能重复
+  // 需要注意的是，value 值不能重复
+  // 且新构造的对象符合对象构造规则
   // 并且返回新构造的对象
   _.invert = function(obj) {
     var result = {};
@@ -1427,8 +1431,10 @@
   // 将该数组排序后返回
   _.functions = _.methods = function(obj) {
     var names = [];
-    // 似乎有问题 IE < 9？
-    // 应该是放弃了 IE < 9 可能对 `toString` 等方法的重写支持
+    // if IE < 9
+    // 且对象重写了 `nonEnumerableProps` 数组中的某些方法
+    // 那么这些方法名是不会被返回的
+    // 放弃了 IE < 9 可能对 `toString` 等方法的重写支持
     for (var key in obj) {
       // 如果某个 key 对应的 value 值类型是函数
       // 则将这个 key 值存入数组
@@ -1451,6 +1457,7 @@
   // Assigns a given object with all the own properties in the passed-in object(s)
   // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
   // 跟 extend 方法类似，但是只把 own properties 拷贝给第一个参数对象
+  // 只继承 own properties 的键值对
   // 参数个数 >= 1
   _.extendOwn = _.assign = createAssigner(_.keys);
 
@@ -1473,7 +1480,7 @@
   // 根据一定的需求（key 值，或者通过 predicate 函数返回真假）
   // 返回拥有一定键值对的对象副本
   // 第二个参数可以是一个 predicate 函数
-  // 也可以是 key
+  // 也可以是 >= 0 个 key
   // _.pick(object, *keys) 
   // Return a copy of the object
   // filtered to only have values for the whitelisted keys (or array of valid keys)
@@ -1508,6 +1515,7 @@
       iteratee = function(value, key, obj) { return key in obj; };
       obj = Object(obj);
     }
+
     for (var i = 0, length = keys.length; i < length; i++) {
       var key = keys[i];
       var value = obj[key];
@@ -1520,10 +1528,11 @@
    // Return a copy of the object without the blacklisted properties.
    // 跟 _.pick 方法相对
    // 返回 _.pick 的补集
-   // 返回没有指定 keys 值的对象副本
+   // 即返回没有指定 keys 值的对象副本
    // 或者返回不能通过 predicate 函数的对象副本
   _.omit = function(obj, iteratee, context) {
     if (_.isFunction(iteratee)) {
+      // _.negate 方法取反
       iteratee = _.negate(iteratee);
     } else {
       var keys = _.map(flatten(arguments, false, false, 1), String);
@@ -1545,7 +1554,7 @@
   // If additional properties are provided then they will be added to the
   // created object.
   // 给定 prototype 
-  // 构造一个新的对象
+  // 构造一个新的对象并返回
   _.create = function(prototype, props) {
     var result = baseCreate(prototype);
 
@@ -1557,7 +1566,7 @@
   // Create a (shallow-cloned) duplicate of an object.
   // 对象的浅复制副本
   // 注意点：所有嵌套的对象或者数组都会跟原对象用同一个引用
-  // 而不是新的副本
+  // 所以是为浅复制，而不是深度克隆
   _.clone = function(obj) {
     // 容错，如果不是对象类型，则可以直接返回
     // 因为一些基础类型是直接按值传递的
@@ -1595,9 +1604,10 @@
     var keys = _.keys(attrs), length = keys.length;
 
     // 如果 object 为空
-    // 如果 attrs 为空对象，则返回 true
+    // 并且 attrs 为空对象，则返回 true
     if (object == null) return !length;
 
+    // ？
     var obj = Object(object);
 
     // 遍历 attrs 对象键值对
@@ -1610,6 +1620,7 @@
       // 则返回 false
       if (attrs[key] !== obj[key] || !(key in obj)) return false;
     }
+
     return true;
   };
 
@@ -1737,6 +1748,7 @@
   // 是否是 {}、[] 或者 "" 或者 null、undefined
   _.isEmpty = function(obj) {
     if (obj == null) return true;
+
     // 如果是数组、类数组、或者字符串
     // 根据 length 属性判断是否为空
     if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
@@ -1764,7 +1776,7 @@
 
   // Is a given variable an object?
   // 判断是否为对象
-  // 对象包括 function 和 object
+  // 这里的对象包括 function 和 object
   _.isObject = function(obj) {
     var type = typeof obj;
     return type === 'function' || type === 'object' && !!obj;
@@ -1781,7 +1793,8 @@
   // Define a fallback version of the method in browsers (ahem, IE < 9), where
   // there isn't any inspectable "Arguments" type.
   // _.isArguments 方法在 IE < 9 下的兼容
-  // IE < 9 不支持函数中的 arguments
+  // IE < 9 不支持用 arguments 表示函数中的参数 "数组"
+  // so 用 callee 属性来判断
   if (!_.isArguments(arguments)) {
     _.isArguments = function(obj) {
       return _.has(obj, 'callee');
@@ -1826,7 +1839,7 @@
 
   // Is a given variable undefined?
   // 判断是否是 undefined
-  // undefined 能被改写
+  // undefined 能被改写 IE < 9
   // 但是 void 0 始终是 undefined 
   _.isUndefined = function(obj) {
     return obj === void 0;
