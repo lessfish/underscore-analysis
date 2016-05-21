@@ -1742,7 +1742,7 @@
   _.isEqual = function(a, b) {
     return eq(a, b);
   };  
-
+  
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
   // 是否是 {}、[] 或者 "" 或者 null、undefined
@@ -1754,7 +1754,7 @@
     if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
     
     // 如果是对象
-    // 根据 keys 值数量判断是否为空
+    // 根据 keys 数量判断是否为 Empty
     return _.keys(obj).length === 0;
   };
 
@@ -1762,7 +1762,7 @@
   // Is a given value a DOM element?
   // 判断是否为 DOM 元素
   _.isElement = function(obj) {
-    // 确保 obj 不是 null 
+    // 确保 obj 不是 null, undefined 等假值
     // 并且 obj.nodeType === 1
     return !!(obj && obj.nodeType === 1);
   };
@@ -1776,7 +1776,7 @@
 
   // Is a given variable an object?
   // 判断是否为对象
-  // 这里的对象包括 function 和 object
+  // 这里的对象包括 function 和 object 
   _.isObject = function(obj) {
     var type = typeof obj;
     return type === 'function' || type === 'object' && !!obj;
@@ -1793,8 +1793,10 @@
   // Define a fallback version of the method in browsers (ahem, IE < 9), where
   // there isn't any inspectable "Arguments" type.
   // _.isArguments 方法在 IE < 9 下的兼容
-  // IE < 9 不支持用 arguments 表示函数中的参数 "数组"
-  // so 用 callee 属性来判断
+  // IE < 9 下对 arguments 调用 Object.prototype.toString.call 方法
+  // 结果是 [object Object]
+  // 而并非我们期望的 [object Arguments]。
+  // so 用是否含有 callee 属性来判断
   if (!_.isArguments(arguments)) {
     _.isArguments = function(obj) {
       return _.has(obj, 'callee');
@@ -1803,7 +1805,10 @@
 
   // Optimize `isFunction` if appropriate. Work around some typeof bugs in old v8,
   // IE 11 (#1621), and in Safari 8 (#1929).
-  // _.isFunction 在 IE 11 和 Safari 8 下的兼容
+  // _.isFunction 在 old v8, IE 11 和 Safari 8 下的兼容
+  // 觉得这里有点问题
+  // 我用的 chrome 49 (显然不是 old v8)
+  // 却也进入了这个 if 判断内部
   if (typeof /./ != 'function' && typeof Int8Array != 'object') {
     _.isFunction = function(obj) {
       return typeof obj == 'function' || false;
@@ -1815,7 +1820,7 @@
   _.isFinite = function(obj) {
     return isFinite(obj) && !isNaN(parseFloat(obj));
   };
-
+  
   // Is the given value `NaN`? (NaN is the only number which does not equal itself).
   // 判断是否是 NaN
   // NaN 是唯一的一个 `自己不等于自己` 的 number 类型
@@ -1836,10 +1841,10 @@
   _.isNull = function(obj) {
     return obj === null;
   };
-
+  
   // Is a given variable undefined?
   // 判断是否是 undefined
-  // undefined 能被改写 IE < 9
+  // undefined 能被改写 （IE < 9）
   // 但是 void 0 始终是 undefined 
   _.isUndefined = function(obj) {
     return obj === void 0;
