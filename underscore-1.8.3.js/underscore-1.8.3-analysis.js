@@ -1437,7 +1437,7 @@
     }
     return result;
   };
-
+  
   // Return a sorted list of the function names available on the object.
   // Aliased as `methods`
   // 传入一个对象
