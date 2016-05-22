@@ -148,15 +148,17 @@
     // 经典闭包（undefinedOnly 在返回的函数内引用）
     return function(obj) {
       var length = arguments.length;
+      // 只传入了一个参数
+      // 或者传入的第一个参数是 null
       if (length < 2 || obj == null) return obj;
 
-      // 枚举第一个参数除外的对象
+      // 枚举第一个参数除外的对象参数
       // 即 arguments[1], arguments[2] ...
       for (var index = 1; index < length; index++) {
         // source 即为对象参数
         var source = arguments[index],
             // 提取对象参数的 keys 值
-            // _.keys 或者 _.allKeys
+            // keysFunc 参数表示 _.keys 或者 _.allKeys
             keys = keysFunc(source),
             l = keys.length;
 
@@ -1286,24 +1288,34 @@
   var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
                       'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
 
+  // obj 为需要遍历键值对的对象
+  // keys 为键数组
+  // 利用 JavaScript 按值传递的特点
+  // 传入数组作为参数，返回该数组           
   function collectNonEnumProps(obj, keys) {
     var nonEnumIdx = nonEnumerableProps.length;
     var constructor = obj.constructor;
 
-    // proto 是否是继承的 prototype
+    // 如果 obj 的 constructor 被重写
+    // 则 proto 变量为 Object.prototype
+    // 如果没有被重写
+    // 则为 obj.constructor.prototype
     var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
 
     // Constructor is a special case.
-    // `constructor` 属性需要特殊处理
+    // `constructor` 属性需要特殊处理 (是否有必要？)
     // 如果 obj 有 `constructor` 这个 key
     // 并且该 key 没有在 keys 数组中
     // 存入数组
     var prop = 'constructor';
     if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
     
-    // nonEnumerableProps 数组中的 keys
+    // 遍历nonEnumerableProps 数组中的 keys
     while (nonEnumIdx--) {
       prop = nonEnumerableProps[nonEnumIdx];
+      // prop in obj 应该肯定返回 true 吧？是否有判断必要？
+      // obj[prop] !== proto[prop] 判断该 key 是否来自于原型链
+      // 即是否重写了原型链上的属性
       if (prop in obj && obj[prop] !== proto[prop] && !_.contains(keys, prop)) {
         keys.push(prop);
       }
@@ -1341,7 +1353,7 @@
   // Retrieve all the property names of an object.
   // 返回一个对象的 keys 数组
   // 不仅仅是 own enumerable properties
-  // 还包括原型链上的
+  // 还包括原型链上继承的属性
   _.allKeys = function(obj) {
     // 不是对象，则返回空数组
     if (!_.isObject(obj)) return [];
@@ -1380,6 +1392,7 @@
   // 返回对象副本
   _.mapObject = function(obj, iteratee, context) {
     // 迭代函数
+    // 对每个键值对进行运算
     iteratee = cb(iteratee, context);
     var keys =  _.keys(obj),
         length = keys.length,
@@ -1387,6 +1400,7 @@
         currentKey;
     for (var index = 0; index < length; index++) {
       currentKey = keys[index];
+      // key 值不变
       // 对每个 value 值用迭代函数迭代
       // 返回经过函数运算后的值
       results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
@@ -1411,10 +1425,11 @@
   // Invert the keys and values of an object. The values must be serializable.
   // 将一个对象的 key-value 键值对颠倒
   // 即原来的 key 为 value 值，原来的 value 值为 key 值
-  // 需要注意的是，value 值不能重复
+  // 需要注意的是，value 值不能重复（后面的会覆盖前面的）
   // 且新构造的对象符合对象构造规则
   // 并且返回新构造的对象
   _.invert = function(obj) {
+    // 返回的新的对象
     var result = {};
     var keys = _.keys(obj);
     for (var i = 0, length = keys.length; i < length; i++) {
@@ -1427,14 +1442,16 @@
   // Aliased as `methods`
   // 传入一个对象
   // 遍历该对象的 key（包括 own properties 以及 原型链上的）
-  // 如果某个 value 是方法，则将该 key 存入数组
+  // 如果某个 value 的类型是方法，则将该 key 存入数组
   // 将该数组排序后返回
   _.functions = _.methods = function(obj) {
+    // 返回的数组
     var names = [];
+
     // if IE < 9
     // 且对象重写了 `nonEnumerableProps` 数组中的某些方法
     // 那么这些方法名是不会被返回的
-    // 放弃了 IE < 9 可能对 `toString` 等方法的重写支持
+    // 可见放弃了 IE < 9 可能对 `toString` 等方法的重写支持
     for (var key in obj) {
       // 如果某个 key 对应的 value 值类型是函数
       // 则将这个 key 值存入数组
@@ -1449,16 +1466,16 @@
   // Copy all of the properties in the source objects over to the destination object
   // and return the destination object
   // It's in-order, so the last source will override properties of the same name in previous arguments.
-  // 将一个对象上的所有键值对添加到另一个对象上
+  // 将几个对象上（第二个参数开始，根据参数而定）的所有键值对添加到 destination 对象上
   // 因为 key 值可能会相同，所以后面的可能会覆盖前面的
-  // 参数个数 >= 1 
+  // 参数个数 >= 0
   _.extend = createAssigner(_.allKeys);
 
   // Assigns a given object with all the own properties in the passed-in object(s)
   // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
   // 跟 extend 方法类似，但是只把 own properties 拷贝给第一个参数对象
   // 只继承 own properties 的键值对
-  // 参数个数 >= 1
+  // 参数个数 >= 0
   _.extendOwn = _.assign = createAssigner(_.keys);
 
   // Returns the first key on an object that passes a predicate test
@@ -1630,7 +1647,7 @@
     // Identical objects are equal. `0 === -0`, but they aren't identical.
     // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
     // 当 a === b 时
-    // 如果 a !== 0，那么我们可以认为 a 和 b isEqual
+    // 如果 a !== 0，那么我们可以认为 a 和 b isEqual（是对象）
     // 如果 a === 0 && b === 0，也 isEqual 啊
     // 可以判断 1 / a 是否等于 1 / b
     // 如果相等，那么 a 和 b isEqual
@@ -1677,6 +1694,8 @@
     }
 
     var areArrays = className === '[object Array]';
+
+    // 如果 a 不是数组（那么就是对象）
     if (!areArrays) {
       if (typeof a != 'object' || typeof b != 'object') return false;
 
@@ -1708,7 +1727,8 @@
     bStack.push(b);
 
     // Recursively compare objects and arrays.
-    // 递归比较
+    // 对于嵌套的对象和数组
+    // 递归展开比较
     if (areArrays) {
       // Compare array lengths to determine if a deep comparison is necessary.
       // 根据 length 判断是否应该继续递归对比
@@ -1720,6 +1740,7 @@
       }
     } else {
       // Deep compare objects.
+      // 两个对象的深度比较
       var keys = _.keys(a), key;
       length = keys.length;
       // Ensure that both objects contain the same number of properties before comparing deep equality.
@@ -1742,7 +1763,7 @@
   _.isEqual = function(a, b) {
     return eq(a, b);
   };  
-  
+
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
   // 是否是 {}、[] 或者 "" 或者 null、undefined
@@ -1820,7 +1841,7 @@
   _.isFinite = function(obj) {
     return isFinite(obj) && !isNaN(parseFloat(obj));
   };
-  
+
   // Is the given value `NaN`? (NaN is the only number which does not equal itself).
   // 判断是否是 NaN
   // NaN 是唯一的一个 `自己不等于自己` 的 number 类型
@@ -1841,7 +1862,7 @@
   _.isNull = function(obj) {
     return obj === null;
   };
-  
+
   // Is a given variable undefined?
   // 判断是否是 undefined
   // undefined 能被改写 （IE < 9）
