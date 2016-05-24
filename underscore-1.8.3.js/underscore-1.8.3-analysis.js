@@ -10,7 +10,7 @@
   // Baseline setup
   // 基本设置、配置
   // --------------
-
+  
   // Establish the root object, `window` in the browser, or `exports` on the server.
   // 将 this 赋值给局部变量 root
   // root 的值, 客户端为 `window`, 服务端(node) 中为 `exports`
@@ -142,13 +142,18 @@
 
   // An internal function for creating assigner functions.
   // 有三个方法用到了这个内部函数
-  // _.extend _.extendOwn _.defaults
+  // _.extend & _.extendOwn & _.defaults
+  // _.extend = createAssigner(_.allKeys);
+  // _.extendOwn = _.assign = createAssigner(_.keys);
+  // _.defaults = createAssigner(_.allKeys, true);
   var createAssigner = function(keysFunc, undefinedOnly) {
     // 返回函数
-    // 经典闭包（undefinedOnly 在返回的函数内引用）
+    // 经典闭包（undefinedOnly 参数在返回的函数中被引用）
+    // 返回的函数参数个数 >= 1
+    // 将第二个开始的对象参数的键值对 "继承" 给第一个参数
     return function(obj) {
       var length = arguments.length;
-      // 只传入了一个参数
+      // 只传入了一个参数（或者 0 个？）
       // 或者传入的第一个参数是 null
       if (length < 2 || obj == null) return obj;
 
@@ -158,7 +163,8 @@
         // source 即为对象参数
         var source = arguments[index],
             // 提取对象参数的 keys 值
-            // keysFunc 参数表示 _.keys 或者 _.allKeys
+            // keysFunc 参数表示 _.keys 
+            // 或者 _.allKeys
             keys = keysFunc(source),
             l = keys.length;
 
@@ -167,13 +173,20 @@
           var key = keys[i];
           // _.extend 和 _.extendOwn 方法
           // 没有传入 undefinedOnly 参数，即 !undefinedOnly 为 true
-          // obj[key] = source[key] 后面对象的键值对直接覆盖 obj
+          // 即肯定会执行 obj[key] = source[key] 
+          // 后面对象的键值对直接覆盖 obj
+          // ==========================================
           // _.defaults 方法，undefinedOnly 参数为 true
+          // 即 !undefinedOnly 为 false
           // 那么当且仅当 obj[key] 为 undefined 时才覆盖
           // 即如果有相同的 key 值，取最早出现的 value 值
-          if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key];
+          // *defaults 中有相同 key 的也是一样取首次出现的
+          if (!undefinedOnly || obj[key] === void 0) 
+            obj[key] = source[key];
         }
       }
+
+      // 返回已经继承后面对象参数属性的第一个参数对象
       return obj;
     };
   };
@@ -1283,7 +1296,7 @@
   // IE < 9，{toString: null}.propertyIsEnumerable('toString') 返回 false
   // IE < 9，重写的 `toString` 属性被认为不可枚举
   var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
-
+  
   // IE < 9 下不能用 for in 来枚举的 key 值集合
   var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
                       'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
@@ -1421,7 +1434,7 @@
     }
     return pairs;
   };
-
+  
   // Invert the keys and values of an object. The values must be serializable.
   // 将一个对象的 key-value 键值对颠倒
   // 即原来的 key 为 value 值，原来的 value 值为 key 值
@@ -1468,14 +1481,14 @@
   // It's in-order, so the last source will override properties of the same name in previous arguments.
   // 将几个对象上（第二个参数开始，根据参数而定）的所有键值对添加到 destination 对象上
   // 因为 key 值可能会相同，所以后面的可能会覆盖前面的
-  // 参数个数 >= 0
+  // 参数个数 >= 1
   _.extend = createAssigner(_.allKeys);
 
   // Assigns a given object with all the own properties in the passed-in object(s)
   // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
   // 跟 extend 方法类似，但是只把 own properties 拷贝给第一个参数对象
   // 只继承 own properties 的键值对
-  // 参数个数 >= 0
+  // 参数个数 >= 1
   _.extendOwn = _.assign = createAssigner(_.keys);
 
   // Returns the first key on an object that passes a predicate test
@@ -1560,10 +1573,13 @@
     return _.pick(obj, iteratee, context);
   };
 
+  // _.defaults(object, *defaults) 
   // Fill in a given object with default properties.
+  // Fill in undefined properties in object 
+  // with the first value present in the following list of defaults objects.
   // 和 _.extend 非常类似
-  // 区别是 _.extend 如果有相同的 key，则后者覆盖前者
-  // 而 _.defaults 则是后者不覆盖前者
+  // 区别是如果 *defaults 中出现了和 object 一样的键
+  // 则不覆盖 object 的键值对
   // 参数个数 >= 1
   _.defaults = createAssigner(_.allKeys, true);
 
@@ -1763,7 +1779,7 @@
   _.isEqual = function(a, b) {
     return eq(a, b);
   };  
-
+  
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
   // 是否是 {}、[] 或者 "" 或者 null、undefined
