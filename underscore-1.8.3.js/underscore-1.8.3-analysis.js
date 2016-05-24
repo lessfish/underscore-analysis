@@ -1597,7 +1597,7 @@
   };
 
   // Create a (shallow-cloned) duplicate of an object.
-  // 对象的浅复制副本
+  // 对象的 `浅复制` 副本
   // 注意点：所有嵌套的对象或者数组都会跟原对象用同一个引用
   // 所以是为浅复制，而不是深度克隆
   _.clone = function(obj) {
@@ -1657,18 +1657,19 @@
     return true;
   };
 
-
+  
   // Internal recursive comparison function for `isEqual`.
+  // "内部的"/ "递归地"/ "比较"
+  // 该内部方法会被递归调用
   var eq = function(a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
     // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
-    // 当 a === b 时
-    // 如果 a !== 0，那么我们可以认为 a 和 b isEqual（是对象）
-    // 如果 a === 0 && b === 0，也 isEqual 啊
-    // 可以判断 1 / a 是否等于 1 / b
-    // 如果相等，那么 a 和 b isEqual
+    // a === b 时
+    // 需要注意 `0 === -0` 这个 special case
+    // 0 和 -0 不相同
+    // 至于原因可以参考上面的链接
     if (a === b) return a !== 0 || 1 / a === 1 / b;
-
+    
     // A strict comparison is necessary because `null == undefined`.
     // 如果 a 和 b 有一个为 null
     // 判断 a === b
@@ -1681,14 +1682,16 @@
     if (b instanceof _) b = b._wrapped;
 
     // Compare `[[Class]]` names.
-    // 用 toString 方法获取 a 变量类型
+    // 用 Object.prototype.toString 方法获取 a 变量类型
     var className = toString.call(a);
 
-    // 如果两个参数类型不相同，则返回 false
+    // 如果 a 和 b 类型不相同，则返回 false
+    // 类型都不同了还比较个蛋！
     if (className !== toString.call(b)) return false;
 
     switch (className) {
       // Strings, numbers, regular expressions, dates, and booleans are compared by value.
+      // 以上五种类型的元素可以直接根据 value 值来比较是否相等
       case '[object RegExp]':
       // RegExps are coerced to strings for comparison (Note: '' + /a/i === '/a/i')
       case '[object String]':
@@ -1778,7 +1781,7 @@
   // 一个是否是另一个的深度克隆副本
   _.isEqual = function(a, b) {
     return eq(a, b);
-  };  
+  }; 
   
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
