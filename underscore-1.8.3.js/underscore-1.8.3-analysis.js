@@ -1582,7 +1582,7 @@
   // 则不覆盖 object 的键值对
   // 参数个数 >= 1
   _.defaults = createAssigner(_.allKeys, true);
-
+  
   // Creates an object that inherits from the given prototype object.
   // If additional properties are provided then they will be added to the
   // created object.
@@ -1669,9 +1669,9 @@
     // 0 和 -0 不相同
     // 至于原因可以参考上面的链接
     if (a === b) return a !== 0 || 1 / a === 1 / b;
-    
+
     // A strict comparison is necessary because `null == undefined`.
-    // 如果 a 和 b 有一个为 null
+    // 如果 a 和 b 有一个为 null（或者 undefined）
     // 判断 a === b
     if (a == null || b == null) return a === b;
 
@@ -1698,28 +1698,64 @@
         // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
         // equivalent to `new String("5")`.
         return '' + a === '' + b;
+
+      // RegExp 和 String 可以看做一类
+      // 如果 obj 为 RegExp 或者 String 类型
+      // 那么 '' + obj 会将 obj 强制转为 String
+      // 根据 '' + a === '' + b 即可判断 a 和 b 是否相等
+      // ================ 
+
       case '[object Number]':
         // `NaN`s are equivalent, but non-reflexive.
         // Object(NaN) is equivalent to NaN
+        // 如果 +a !== +a 
+        // 那么 a 就是 NaN
+        // 判断 b 是否也是 NaN 即可
         if (+a !== +a) return +b !== +b;
+
         // An `egal` comparison is performed for other numeric values.
+        // 排除了 NaN 干扰
+        // 还要考虑 0 的干扰
+        // 用 +a 将 Number() 形式转为基本类型
+        // 如果 a 为 0，判断 1 / +a === 1 / b
+        // 否则判断 +a === +b
         return +a === 0 ? 1 / +a === 1 / b : +a === +b;
+
+      // 如果 a 为 Number 类型
+      // 要注意 NaN 这个 special number
+      // NaN 和 NaN 被认为 equal
+      // ================ 
+
       case '[object Date]':
       case '[object Boolean]':
         // Coerce dates and booleans to numeric primitive values. Dates are compared by their
         // millisecond representations. Note that invalid dates with millisecond representations
         // of `NaN` are not equivalent.
         return +a === +b;
+
+      // Date 和 Boolean 可以看做一类
+      // 如果 obj 为 Date 或者 Boolean
+      // 那么 +obj 会将 obj 转为 Number 类型
+      // 然后比较即可
     }
 
+    // 判断 a 是否是数组
     var areArrays = className === '[object Array]';
 
-    // 如果 a 不是数组（那么就是对象）
+    // 如果 a 不是数组类型
     if (!areArrays) {
+      // 如果 a 不是 object 或者 b 不是 object
+      // 则返回 false
       if (typeof a != 'object' || typeof b != 'object') return false;
+
+      // 通过上个步骤的 if 过滤
+      // !!保证到此的 a 和 b 均为对象!!
 
       // Objects with different constructors are not equivalent, but `Object`s or `Array`s
       // from different frames are.
+      // 通过构造函数来判断 a 和 b 是否相同
+      // 不同对象的构造函数不同
+      // 还需要特别注意下在 iframe 内的情况
       var aCtor = a.constructor, bCtor = b.constructor;
       if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof aCtor &&
                                _.isFunction(bCtor) && bCtor instanceof bCtor)
@@ -1732,9 +1768,13 @@
 
     // Initializing stack of traversed objects.
     // It's done here since we only need them for objects and arrays comparison.
+    // 第一次调用 eq() 函数，没有传入 aStack 和 bStack 参数
+    // 之后递归调用都会传入这两个参数
     aStack = aStack || [];
     bStack = bStack || [];
+
     var length = aStack.length;
+
     while (length--) {
       // Linear search. Performance is inversely proportional to the number of
       // unique nested structures.
@@ -1746,49 +1786,74 @@
     bStack.push(b);
 
     // Recursively compare objects and arrays.
-    // 对于嵌套的对象和数组
-    // 递归展开比较
+    // 将嵌套的对象和数组展开
+    // 如果 a 是数组
+    // 因为嵌套，所以需要展开深度比较
     if (areArrays) {
       // Compare array lengths to determine if a deep comparison is necessary.
       // 根据 length 判断是否应该继续递归对比
       length = a.length;
+
+      // 如果 a 和 b length 属性大小不同
+      // 那么显然 a 和 b 不同
+      // return false 不用继续比较了
       if (length !== b.length) return false;
+
       // Deep compare the contents, ignoring non-numeric properties.
       while (length--) {
+        // 递归
         if (!eq(a[length], b[length], aStack, bStack)) return false;
       }
     } else {
+      // 如果 a 不是数组
+      // 进入这个 if-else 分支
+
       // Deep compare objects.
       // 两个对象的深度比较
       var keys = _.keys(a), key;
       length = keys.length;
+
       // Ensure that both objects contain the same number of properties before comparing deep equality.
+      // a 和 b 对象的键数量不同
+      // 那还比较毛？
       if (_.keys(b).length !== length) return false;
+
       while (length--) {
         // Deep compare each member
+        // 递归比较
         key = keys[length];
         if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
       }
     }
+
     // Remove the first object from the stack of traversed objects.
+    // 与 aStack.push(a) 对应
+    // 此时 aStack 栈顶元素正是 a
+    // 而代码走到此步
+    // a 和 b isEqual 确认
+    // 所以 a，b 两个元素可以出栈
     aStack.pop();
+
     bStack.pop();
+
+    // 深度搜索递归比较完毕
+    // 放心地 return true
     return true;
   };
-
+  
   // Perform a deep comparison to check if two objects are equal.
   // 判断两个对象是否一样
   // 一个是否是另一个的深度克隆副本
   _.isEqual = function(a, b) {
     return eq(a, b);
-  }; 
+  };
   
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
   // 是否是 {}、[] 或者 "" 或者 null、undefined
   _.isEmpty = function(obj) {
     if (obj == null) return true;
-
+    
     // 如果是数组、类数组、或者字符串
     // 根据 length 属性判断是否为空
     if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
