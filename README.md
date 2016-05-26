@@ -18,6 +18,7 @@
 - [for ... in 存在的浏览器兼容问题你造吗 (2016-05-22)](https://github.com/hanzichi/underscore-analysis/issues/3)
 - [内部方法 createAssigner 详解 (2016-05-24)](https://github.com/hanzichi/underscore-analysis/issues/4)
 - [JavaScript 中是如何比较两个元素是否 "相同" 的 (2016-05-25)](https://github.com/hanzichi/underscore-analysis/issues/5)
+- [Object Functions 相关源码拾遗 & 小结 (2016-05-26)](https://github.com/hanzichi/underscore-analysis/issues/6)
 
 
 

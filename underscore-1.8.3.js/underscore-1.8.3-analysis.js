@@ -3,7 +3,7 @@
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
 //     中文注释 by hanzichi @https://github.com/hanzichi
-//     Objects -> Arrays -> Collections -> Functions -> Utility
+//     Object -> Array -> Collection -> Function -> Utility
 
 (function() {
 
@@ -192,6 +192,7 @@
   };
 
   // An internal function for creating a new object that inherits from another.
+  // _.create
   var baseCreate = function(prototype) {
     // 如果 prototype 参数不是对象
     if (!_.isObject(prototype)) return {};
@@ -505,7 +506,7 @@
   _.where = function(obj, attrs) {
     return _.filter(obj, _.matcher(attrs));
   };
-
+  
   // Convenience version of a common use case of `find`: getting the first object
   // containing specific `key:value` pairs.
   // 寻找第一个有指定 key-value 键值对的对象
@@ -718,8 +719,8 @@
   // Array Functions
   // 数组的扩展方法
   // 共 20 个扩展方法
-  // ---------------
-
+  // ---------------  
+  
   // Get the first element of an array. Passing **n** will return the first N
   // values in the array. Aliased as `head` and `take`. The **guard** check
   // allows it to work with `_.map`.
@@ -769,7 +770,7 @@
   // Especially useful on the arguments object. Passing an **n** will return
   // the rest N values in the array.
   // 传入一个数组
-  // 返回一个数组副本，剔除第一个元素
+  // 返回剔除第一个元素的数组副本
   // 如果传入参数 n，则剔除前 n 个元素
   _.rest = _.tail = _.drop = function(array, n, guard) {
     return slice.call(array, n == null || guard ? 1 : n);
@@ -779,10 +780,11 @@
   // 去掉数组中所有的假值
   // 返回数组副本
   // 假值包括 false、null、undefined、''、NaN、0
+  // 联想 PHP 中的 array_filter() 函数
   _.compact = function(array) {
     return _.filter(array, _.identity);
   };
-
+  
   // Internal implementation of a recursive `flatten` function.
   // 递归调用数组，将数组展开
   // 即 [1, 2, [3, 4]] => [1, 2, 3, 4]
@@ -925,7 +927,7 @@
       return !_.contains(rest, value);
     });
   };
-
+  
   // Zip together multiple lists into a single array -- elements that share
   // an index go together.
   // 将多个数组中相同位置的元素归类
@@ -961,7 +963,7 @@
     }
     return result;
   };
-
+  
   // Generator function to create the findIndex and findLastIndex functions
   // dir === 1 从前往后找 
   // dir === -1 从后往前找
@@ -1054,7 +1056,7 @@
 
     return range;
   };
-
+  
   // Function (ahem) Functions
   // 函数的扩展方法
   // 共 14 个扩展方法
@@ -1295,16 +1297,21 @@
   // 比如重写了对象的 `toString` 方法，这个 key 值就不能在 IE < 9 下用 for in 枚举到
   // IE < 9，{toString: null}.propertyIsEnumerable('toString') 返回 false
   // IE < 9，重写的 `toString` 属性被认为不可枚举
+  // 据此可以判断是否在 IE < 9 浏览器环境中
   var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
   
   // IE < 9 下不能用 for in 来枚举的 key 值集合
+  // 其实还有个 `constructor`
+  // 个人觉得可能是 `constructor` 和其他属性不属于一类
+  // nonEnumerableProps[] 中都是方法
+  // 所以区分开来了
   var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
                       'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
 
   // obj 为需要遍历键值对的对象
   // keys 为键数组
   // 利用 JavaScript 按值传递的特点
-  // 传入数组作为参数，返回该数组           
+  // 传入数组作为参数，能直接改变数组的值          
   function collectNonEnumProps(obj, keys) {
     var nonEnumIdx = nonEnumerableProps.length;
     var constructor = obj.constructor;
@@ -1317,9 +1324,10 @@
 
     // Constructor is a special case.
     // `constructor` 属性需要特殊处理 (是否有必要？)
+    // https://github.com/hanzichi/underscore-analysis/issues/3
     // 如果 obj 有 `constructor` 这个 key
     // 并且该 key 没有在 keys 数组中
-    // 存入数组
+    // 存入 keys 数组
     var prop = 'constructor';
     if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
     
@@ -1344,13 +1352,15 @@
     // 如果传入的参数不是对象，则返回空数组
     if (!_.isObject(obj)) return [];
 
-    // 支持 ES5 Object.key() 方法，则优先使用该方法
+    // 如果浏览器支持 ES5 Object.key() 方法
+    // 则优先使用该方法
     if (nativeKeys) return nativeKeys(obj);
 
     var keys = [];
 
     // own enumerable properties
-    for (var key in obj) // hasOwnProperty
+    for (var key in obj) 
+      // hasOwnProperty
       if (_.has(obj, key)) keys.push(key);
 
     // Ahem, IE < 9.
@@ -1368,6 +1378,7 @@
   // 不仅仅是 own enumerable properties
   // 还包括原型链上继承的属性
   _.allKeys = function(obj) {
+    // 容错
     // 不是对象，则返回空数组
     if (!_.isObject(obj)) return [];
 
@@ -1375,7 +1386,7 @@
     for (var key in obj) keys.push(key);
 
     // Ahem, IE < 9.
-    // IE < 9 下的 bug
+    // IE < 9 下的 bug，同 _.keys 方法
     if (hasEnumBug) collectNonEnumProps(obj, keys);
 
     return keys;
@@ -1405,12 +1416,14 @@
   // 返回对象副本
   _.mapObject = function(obj, iteratee, context) {
     // 迭代函数
-    // 对每个键值对进行运算
+    // 对每个键值对进行迭代
     iteratee = cb(iteratee, context);
+
     var keys =  _.keys(obj),
         length = keys.length,
         results = {}, // 对象副本，该方法返回的对象
         currentKey;
+
     for (var index = 0; index < length; index++) {
       currentKey = keys[index];
       // key 值不变
@@ -1438,7 +1451,7 @@
   // Invert the keys and values of an object. The values must be serializable.
   // 将一个对象的 key-value 键值对颠倒
   // 即原来的 key 为 value 值，原来的 value 值为 key 值
-  // 需要注意的是，value 值不能重复（后面的会覆盖前面的）
+  // 需要注意的是，value 值不能重复（不然后面的会覆盖前面的）
   // 且新构造的对象符合对象构造规则
   // 并且返回新构造的对象
   _.invert = function(obj) {
@@ -1454,8 +1467,8 @@
   // Return a sorted list of the function names available on the object.
   // Aliased as `methods`
   // 传入一个对象
-  // 遍历该对象的 key（包括 own properties 以及 原型链上的）
-  // 如果某个 value 的类型是方法，则将该 key 存入数组
+  // 遍历该对象的键值对（包括 own properties 以及 原型链上的）
+  // 如果某个 value 的类型是方法（function），则将该 key 存入数组
   // 将该数组排序后返回
   _.functions = _.methods = function(obj) {
     // 返回的数组
@@ -1470,6 +1483,7 @@
       // 则将这个 key 值存入数组
       if (_.isFunction(obj[key])) names.push(key);
     }
+
     // 返回排序后的数组
     return names.sort();
   };
@@ -1479,8 +1493,8 @@
   // Copy all of the properties in the source objects over to the destination object
   // and return the destination object
   // It's in-order, so the last source will override properties of the same name in previous arguments.
-  // 将几个对象上（第二个参数开始，根据参数而定）的所有键值对添加到 destination 对象上
-  // 因为 key 值可能会相同，所以后面的可能会覆盖前面的
+  // 将几个对象上（第二个参数开始，根据参数而定）的所有键值对添加到 destination 对象（第一个参数）上
+  // 因为 key 值可能会相同，所以后面的（键值对）可能会覆盖前面的
   // 参数个数 >= 1
   _.extend = createAssigner(_.allKeys);
 
@@ -1493,12 +1507,12 @@
 
   // Returns the first key on an object that passes a predicate test
   // 跟数组方法的 _.findIndex 类似
-  // 找到对象中第一个满足条件的元素
-  // 并返回其 key 值
+  // 找到对象的键值对中第一个满足条件的键值对
+  // 并返回该键值对 key 值
   _.findKey = function(obj, predicate, context) {
     predicate = cb(predicate, context);
     var keys = _.keys(obj), key;
-    // 遍历
+    // 遍历键值对
     for (var i = 0, length = keys.length; i < length; i++) {
       key = keys[i];
       // 符合条件，直接返回 key 值
@@ -1517,6 +1531,8 @@
   // Alternatively accepts a predicate indicating which keys to pick.
   /*
   _.pick({name: 'moe', age: 50, userid: 'moe1'}, 'name', 'age');
+  => {name: 'moe', age: 50}
+  _.pick({name: 'moe', age: 50, userid: 'moe1'}, ['name', 'age']);
   => {name: 'moe', age: 50}
   _.pick({name: 'moe', age: 50, userid: 'moe1'}, function(value, key, object) {
     return _.isNumber(value);
@@ -1538,6 +1554,7 @@
       // 如果第二个参数不是函数
       // 则后面的 keys 可能是数组
       // 也可能是连续的几个并列的参数
+      // 用 flatten 将它们展开
       keys = flatten(arguments, false, false, 1);
 
       // 也转为 predicate 函数判断形式
@@ -1562,7 +1579,7 @@
    // 或者返回不能通过 predicate 函数的对象副本
   _.omit = function(obj, iteratee, context) {
     if (_.isFunction(iteratee)) {
-      // _.negate 方法取反
+      // _.negate 方法对 iteratee 的结果取反
       iteratee = _.negate(iteratee);
     } else {
       var keys = _.map(flatten(arguments, false, false, 1), String);
@@ -1578,8 +1595,10 @@
   // Fill in undefined properties in object 
   // with the first value present in the following list of defaults objects.
   // 和 _.extend 非常类似
-  // 区别是如果 *defaults 中出现了和 object 一样的键
+  // 区别是如果 *defaults 中出现了和 object 中一样的键
   // 则不覆盖 object 的键值对
+  // 如果 *defaults 多个参数对象中有相同 key 的对象
+  // 则取最早出现的 value 值
   // 参数个数 >= 1
   _.defaults = createAssigner(_.allKeys, true);
   
@@ -1587,6 +1606,7 @@
   // If additional properties are provided then they will be added to the
   // created object.
   // 给定 prototype 
+  // 以及一些 own properties
   // 构造一个新的对象并返回
   _.create = function(prototype, props) {
     var result = baseCreate(prototype);
@@ -1601,9 +1621,9 @@
   // 注意点：所有嵌套的对象或者数组都会跟原对象用同一个引用
   // 所以是为浅复制，而不是深度克隆
   _.clone = function(obj) {
-    // 容错，如果不是对象类型，则可以直接返回
+    // 容错，如果不是对象或者数组类型，则可以直接返回
     // 因为一些基础类型是直接按值传递的
-    // 思考，arguments 呢？ Nodelist 呢？ HTML Collection 呢？
+    // 思考，arguments 呢？ Nodelists 呢？ HTML Collections 呢？
     if (!_.isObject(obj)) return obj;
 
     // 如果是数组，则用 obj.slice() 返回数组副本
@@ -1630,17 +1650,17 @@
 
   // Returns whether an object has a given set of `key:value` pairs.
   // attrs 参数为一个对象
-  // 判断 obj 对象中是否有 attrs 中的所有 key-value 键值对
+  // 判断 object 对象中是否有 attrs 中的所有 key-value 键值对
   // 返回布尔值
   _.isMatch = function(object, attrs) {
     // 提取 attrs 对象的所有 keys
     var keys = _.keys(attrs), length = keys.length;
 
     // 如果 object 为空
-    // 并且 attrs 为空对象，则返回 true
+    // 根据 attrs 的键值对数量返回布尔值
     if (object == null) return !length;
 
-    // ？
+    // 这一步有必要？
     var obj = Object(object);
 
     // 遍历 attrs 对象键值对
@@ -1666,7 +1686,7 @@
     // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
     // a === b 时
     // 需要注意 `0 === -0` 这个 special case
-    // 0 和 -0 不相同
+    // 0 和 -0 被认为不相同（unequal）
     // 至于原因可以参考上面的链接
     if (a === b) return a !== 0 || 1 / a === 1 / b;
 
@@ -1677,12 +1697,12 @@
 
     // Unwrap any wrapped objects.
     // 如果 a 和 b 是 underscore OOP 的对象
-    // 那么比较 _wrapped 属性值
+    // 那么比较 _wrapped 属性值（Unwrap）
     if (a instanceof _) a = a._wrapped;
     if (b instanceof _) b = b._wrapped;
 
     // Compare `[[Class]]` names.
-    // 用 Object.prototype.toString 方法获取 a 变量类型
+    // 用 Object.prototype.toString.call 方法获取 a 变量类型
     var className = toString.call(a);
 
     // 如果 a 和 b 类型不相同，则返回 false
@@ -1691,12 +1711,13 @@
 
     switch (className) {
       // Strings, numbers, regular expressions, dates, and booleans are compared by value.
-      // 以上五种类型的元素可以直接根据 value 值来比较是否相等
+      // 以上五种类型的元素可以直接根据其 value 值来比较是否相等
       case '[object RegExp]':
       // RegExps are coerced to strings for comparison (Note: '' + /a/i === '/a/i')
       case '[object String]':
         // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
         // equivalent to `new String("5")`.
+        // 转为 String 类型进行比较 
         return '' + a === '' + b;
 
       // RegExp 和 String 可以看做一类
@@ -1717,6 +1738,8 @@
         // 排除了 NaN 干扰
         // 还要考虑 0 的干扰
         // 用 +a 将 Number() 形式转为基本类型
+        // 即 +Number(1) ==> 1
+        // 0 需要特判
         // 如果 a 为 0，判断 1 / +a === 1 / b
         // 否则判断 +a === +b
         return +a === 0 ? 1 / +a === 1 / b : +a === +b;
@@ -1737,11 +1760,15 @@
       // 如果 obj 为 Date 或者 Boolean
       // 那么 +obj 会将 obj 转为 Number 类型
       // 然后比较即可
+      // +new Date() 是当前时间距离 1970 年 1 月 1 日 0 点的毫秒数
+      // +true => 1
+      // +new Boolean(false) => 0
     }
+
 
     // 判断 a 是否是数组
     var areArrays = className === '[object Array]';
-
+    
     // 如果 a 不是数组类型
     if (!areArrays) {
       // 如果 a 不是 object 或者 b 不是 object
@@ -1754,8 +1781,10 @@
       // Objects with different constructors are not equivalent, but `Object`s or `Array`s
       // from different frames are.
       // 通过构造函数来判断 a 和 b 是否相同
-      // 不同对象的构造函数不同
-      // 还需要特别注意下在 iframe 内的情况
+      // 但是，如果 a 和 b 的构造函数不同
+      // 也并不一定 a 和 b 就是 unequal
+      // 比如 a 和 b 在不同的 iframes 中！
+      // aCtor instanceof aCtor 这步有点不大理解，啥用？
       var aCtor = a.constructor, bCtor = b.constructor;
       if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof aCtor &&
                                _.isFunction(bCtor) && bCtor instanceof bCtor)
@@ -1763,6 +1792,7 @@
         return false;
       }
     }
+
     // Assume equality for cyclic structures. The algorithm for detecting cyclic
     // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
 
@@ -1806,7 +1836,7 @@
       }
     } else {
       // 如果 a 不是数组
-      // 进入这个 if-else 分支
+      // 进入这个判断分支
 
       // Deep compare objects.
       // 两个对象的深度比较
@@ -1833,7 +1863,6 @@
     // a 和 b isEqual 确认
     // 所以 a，b 两个元素可以出栈
     aStack.pop();
-
     bStack.pop();
 
     // 深度搜索递归比较完毕
@@ -1843,7 +1872,10 @@
   
   // Perform a deep comparison to check if two objects are equal.
   // 判断两个对象是否一样
-  // 一个是否是另一个的深度克隆副本
+  // new Boolean(true)，true 被认为 equal
+  // [1, 2, 3], [1, 2, 3] 被认为 equal
+  // 0 和 -0 被认为 unequal
+  // NaN 和 NaN 被认为 equal
   _.isEqual = function(a, b) {
     return eq(a, b);
   };
@@ -1856,6 +1888,7 @@
     
     // 如果是数组、类数组、或者字符串
     // 根据 length 属性判断是否为空
+    // 后面的条件是为了过滤 isArrayLike 对于 {length: 10} 这样对象的判断 bug？
     if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
     
     // 如果是对象
@@ -1899,9 +1932,9 @@
   // there isn't any inspectable "Arguments" type.
   // _.isArguments 方法在 IE < 9 下的兼容
   // IE < 9 下对 arguments 调用 Object.prototype.toString.call 方法
-  // 结果是 [object Object]
+  // 结果是 => [object Object]
   // 而并非我们期望的 [object Arguments]。
-  // so 用是否含有 callee 属性来判断
+  // so 用是否含有 callee 属性来做兼容
   if (!_.isArguments(arguments)) {
     _.isArguments = function(obj) {
       return _.has(obj, 'callee');
@@ -1937,6 +1970,8 @@
   // 判断是否是布尔值
   // 基础类型（true、 false）
   // 以及 new Boolean() 两个方向判断
+  // 有点多余了吧？
+  // 个人觉得直接用 toString.call(obj) 来判断就可以了
   _.isBoolean = function(obj) {
     return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
   };
@@ -1950,6 +1985,8 @@
   // Is a given variable undefined?
   // 判断是否是 undefined
   // undefined 能被改写 （IE < 9）
+  // undefined 只是全局对象的一个属性
+  // 在局部环境能被重新定义
   // 但是 void 0 始终是 undefined 
   _.isUndefined = function(obj) {
     return obj === void 0;
