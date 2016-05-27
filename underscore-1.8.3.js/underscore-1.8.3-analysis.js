@@ -730,7 +730,7 @@
     // 容错，数组为空则返回 undefined
     if (array == null) return void 0;
 
-    // 没指定参数 n，则返回第一个元素
+    // 没指定参数 n，则默认返回第一个元素
     if (n == null || guard) return array[0];
 
     // 如果传入参数 n，则返回前 n 个元素组成的数组
@@ -742,7 +742,7 @@
   // the arguments object. Passing **n** will return all the values in
   // the array, excluding the last N.
   // 传入一个数组
-  // 返回一个数组副本，剔除最后一个元素
+  // 返回剔除最后一个元素之后的数组副本
   // 如果传入参数 n，则剔除最后 n 个元素
   _.initial = function(array, n, guard) {
     return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)));
@@ -770,7 +770,7 @@
   // Especially useful on the arguments object. Passing an **n** will return
   // the rest N values in the array.
   // 传入一个数组
-  // 返回剔除第一个元素的数组副本
+  // 返回剔除第一个元素后的数组副本
   // 如果传入参数 n，则剔除前 n 个元素
   _.rest = _.tail = _.drop = function(array, n, guard) {
     return slice.call(array, n == null || guard ? 1 : n);
@@ -781,6 +781,9 @@
   // 返回数组副本
   // 假值包括 false、null、undefined、''、NaN、0
   // 联想 PHP 中的 array_filter() 函数
+  // _.identity = function(value) {
+  //   return value;
+  // };
   _.compact = function(array) {
     return _.filter(array, _.identity);
   };
@@ -789,16 +792,17 @@
   // 递归调用数组，将数组展开
   // 即 [1, 2, [3, 4]] => [1, 2, 3, 4]
   // flatten(arguments, true, true, 1)
-  // flatten(array, shallow, false)
   // flatten(arguments, true, true)
   // flatten(arguments, false, false, 1)
+  // ===========================//
   // input => 数组或者 arguments
-  // shallow => 是否只展开一层
   // strict => 为 true，说明需要展开的是纯数组
   // strict => 为 false，说明需要保存的可能有单个键值
+  // shallow => 是否只展开一层
   // startIndex => 从 input 的第几项开始展开
   var flatten = function(input, shallow, strict, startIndex) {
     // output 为展开后的数组
+    // 即 flatten 方法返回数据
     // idx 为 output 的累计数组下标
     var output = [], idx = 0;
 
@@ -809,26 +813,30 @@
         //flatten current level of array or arguments object
         // !shallow 为 true，则深度展开
         // 继续递归展开
-        if (!shallow) value = flatten(value, shallow, strict);
+        if (!shallow) 
+          value = flatten(value, shallow, strict);
 
         // 递归到最后一层
-        // 或者 shallow 为 true => 只展开一层
+        // 或者 (shallow === true) => 只展开一层
         var j = 0, len = value.length;
+
         output.length += len;
+
         // 将 value 数组的元素添加到 output 数组中
         while (j < len) {
           output[idx++] = value[j++];
         }
-      } else if (!strict) { 
+      } else if (!strict) { // !strict 为 true，说明 value 不是数组（是基本类型）
         output[idx++] = value;
       }
     }
+
     return output;
   };
 
   // Flatten out an array, either recursively (by default), or just one level.
   // 将嵌套的数组展开
-  // 如果参数 shallow 为 true，则仅展开一层
+  // 如果参数 (shallow === true)，则仅展开一层
   // _.flatten([1, [2], [3, [[4]]]]);
   // => [1, 2, 3, 4];
 
@@ -837,7 +845,7 @@
   _.flatten = function(array, shallow) {
     // array => 需要展开的数组
     // shallow => 是否只展开一层
-    // false 为 flatten 函数 strict 变量
+    // false 为 flatten 方法 strict 变量
     // 在这里并没有什么卵用
     return flatten(array, shallow, false);
   };
@@ -846,6 +854,9 @@
   // 从数组中移除指定的元素
   // 返回移除后的数组副本
   _.without = function(array) {
+    // slice.call(arguments, 1)
+    // 将第二个参数开始的元素，装入一个数组
+    // 之后便可以调用 _.difference 方法
     return _.difference(array, slice.call(arguments, 1));
   };
 
@@ -855,20 +866,28 @@
   // 数组去重
   // 如果第二个参数 `isSorted` 为 true，则去重后还要排序
   // 如果有第三个参数 iteratee，则对数组每个参数迭代
-  // 对迭代返回值进行去重
+  // 对迭代之后的结果进行去重
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
-    // isSorted === false 
+    // isSorted == false 
+    // _.unique(array, false, isSorted, iteratee)
     if (!_.isBoolean(isSorted)) {
       context = iteratee;
       iteratee = isSorted;
       isSorted = false;
     }
-    if (iteratee != null) iteratee = cb(iteratee, context);
+
+    if (iteratee != null) 
+      iteratee = cb(iteratee, context);
+
     var result = [];
     var seen = [];
+
     for (var i = 0, length = getLength(array); i < length; i++) {
       var value = array[i],
+          // 如果指定了迭代函数
+          // 则对数组每一个元素进行迭代
           computed = iteratee ? iteratee(value, i, array) : value;
+
       if (isSorted) {
         if (!i || seen !== computed) result.push(value);
         seen = computed;
@@ -881,6 +900,7 @@
         result.push(value);
       }
     }
+    
     return result;
   };
 
@@ -895,7 +915,7 @@
   // Produce an array that contains every item shared between all the
   // passed-in arrays.
   // 寻找几个数组中共有的元素
-  // 将这些元素存入另一个数组中返回
+  // 将这些每个数组中都有的元素存入另一个数组中返回
   _.intersection = function(array) {
     var result = [];
     var argsLength = arguments.length;
@@ -938,6 +958,12 @@
 
   // Complement of _.zip. Unzip accepts an array of arrays and groups
   // each array's elements on shared indices
+  // The opposite of zip. Given an array of arrays, 
+  // returns a series of new arrays, 
+  // the first of which contains all of the first elements in the input arrays, 
+  // the second of which contains all of the second elements, and so on.
+  // _.unzip([["moe", 30, true], ["larry", 40, false], ["curly", 50, false]]);
+  // => [['moe', 'larry', 'curly'], [30, 40, 50], [true, false, false]]
   _.unzip = function(array) {
     var length = array && _.max(array, getLength).length || 0;
     var result = Array(length);
@@ -951,7 +977,7 @@
   // Converts lists into objects. Pass either a single array of `[key, value]`
   // pairs, or two parallel arrays of the same length -- one of keys, and one of
   // the corresponding values.
-  // 将数组或者关联数组转化为对象
+  // 将数组转化为对象
   _.object = function(list, values) {
     var result = {};
     for (var i = 0, length = getLength(list); i < length; i++) {
