@@ -779,7 +779,7 @@
   // Trim out all falsy values from an array.
   // 去掉数组中所有的假值
   // 返回数组副本
-  // 假值包括 false、null、undefined、''、NaN、0
+  // JavaScript 中的假值包括 false、null、undefined、''、NaN、0
   // 联想 PHP 中的 array_filter() 函数
   // _.identity = function(value) {
   //   return value;
@@ -795,13 +795,13 @@
   // flatten(arguments, true, true)
   // flatten(arguments, false, false, 1)
   // ===========================//
-  // input => 数组或者 arguments
-  // strict => 为 true，说明需要展开的是纯数组
-  // strict => 为 false，说明需要保存的可能有单个键值
+  // input => Array 或者 arguments
   // shallow => 是否只展开一层
+  // strict === true，说明需要展开的是纯数组
+  // strict === false，说明需要保存的可能有单个键值
   // startIndex => 从 input 的第几项开始展开
   var flatten = function(input, shallow, strict, startIndex) {
-    // output 为展开后的数组
+    // output 数组保存结果
     // 即 flatten 方法返回数据
     // idx 为 output 的累计数组下标
     var output = [], idx = 0;
@@ -810,13 +810,16 @@
       var value = input[i];
       // 数组 或者 arguments
       if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
-        //flatten current level of array or arguments object
-        // !shallow 为 true，则深度展开
+        // flatten current level of array or arguments object
+        // !shallow 为 true，即 shallow 值为 false
+        // 则表示需深度展开
         // 继续递归展开
         if (!shallow) 
+          // value 重写赋值
+          // flatten 返回数组
           value = flatten(value, shallow, strict);
 
-        // 递归到最后一层
+        // 递归展开到最后一层
         // 或者 (shallow === true) => 只展开一层
         var j = 0, len = value.length;
 
@@ -839,23 +842,28 @@
   // 如果参数 (shallow === true)，则仅展开一层
   // _.flatten([1, [2], [3, [[4]]]]);
   // => [1, 2, 3, 4];
-
+  // ====== //
   // _.flatten([1, [2], [3, [[4]]]], true);
   // => [1, 2, 3, [[4]]];
   _.flatten = function(array, shallow) {
     // array => 需要展开的数组
     // shallow => 是否只展开一层
     // false 为 flatten 方法 strict 变量
-    // 在这里并没有什么卵用
     return flatten(array, shallow, false);
   };
 
   // Return a version of the array that does not contain the specified value(s).
+  // without_.without(array, *values) 
+  // Returns a copy of the array with all instances of the values removed.
+  // ====== //
+  // _.without([1, 2, 1, 0, 3, 1, 4], 0, 1);
+  // => [2, 3, 4]
+  // ===== //
   // 从数组中移除指定的元素
   // 返回移除后的数组副本
   _.without = function(array) {
     // slice.call(arguments, 1)
-    // 将第二个参数开始的元素，装入一个数组
+    // 将 arguments 转为数组（去掉第一个元素）
     // 之后便可以调用 _.difference 方法
     return _.difference(array, slice.call(arguments, 1));
   };
@@ -864,22 +872,31 @@
   // been sorted, you have the option of using a faster algorithm.
   // Aliased as `unique`.
   // 数组去重
-  // 如果第二个参数 `isSorted` 为 true，则去重后还要排序
+  // 如果第二个参数 `isSorted` 为 true
+  // 则说明事先已经知道数组有序
+  // 程序会跑一个更快的算法
   // 如果有第三个参数 iteratee，则对数组每个参数迭代
   // 对迭代之后的结果进行去重
+  // 返回去重后的数组
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
-    // isSorted == false 
-    // _.unique(array, false, isSorted, iteratee)
+    // 没有传入 isSorted 参数
+    // 转为 _.unique(array, false, undefined, iteratee)
     if (!_.isBoolean(isSorted)) {
       context = iteratee;
       iteratee = isSorted;
       isSorted = false;
     }
 
+    // 如果有迭代函数
+    // 则根据 this 指向二次返回新的迭代函数
     if (iteratee != null) 
       iteratee = cb(iteratee, context);
 
+    // 结果数组，是 array 的子集
     var result = [];
+
+    // 已经出现过的元素（或者经过迭代过的值）
+    // 用来 hash 过滤
     var seen = [];
 
     for (var i = 0, length = getLength(array); i < length; i++) {
@@ -888,27 +905,41 @@
           // 则对数组每一个元素进行迭代
           computed = iteratee ? iteratee(value, i, array) : value;
 
+      // 如果是有序数组，则当前元素只需跟上一个元素对比即可
+      // 用 seen 变量保存上一个元素
       if (isSorted) {
         if (!i || seen !== computed) result.push(value);
+        // seen 保存当前元素，供下一次对比
         seen = computed;
       } else if (iteratee) {
+        // 如果 seen[] 中没有 computed 这个元素值
         if (!_.contains(seen, computed)) {
           seen.push(computed);
           result.push(value);
         }
-      } else if (!_.contains(result, value)) {
+      } else if (!_.contains(result, value)) {  
+        // 如果不用经过迭代函数计算，也就不用 seen[] 变量了
         result.push(value);
       }
     }
-    
+
     return result;
   };
 
   // Produce an array that contains the union: each distinct element from all of
   // the passed-in arrays.
+  // union_.union(*arrays) 
+  // Computes the union of the passed-in arrays: 
+  // the list of unique items, in order, that are present in one or more of the arrays.
+  // ========== //
+  // _.union([1, 2, 3], [101, 2, 1, 10], [2, 1]);
+  // => [1, 2, 3, 101, 10]
+  // ========== //
   // 将多个数组的元素集中到一个数组中
   // 并且去重，返回数组副本
   _.union = function() {
+    // 首先用 flatten 方法将传入的数组展开成一个数组
+    // 然后就可以愉快地调用 _.uniq 方法了
     return _.uniq(flatten(arguments, true, true));
   };
 
@@ -917,16 +948,32 @@
   // 寻找几个数组中共有的元素
   // 将这些每个数组中都有的元素存入另一个数组中返回
   _.intersection = function(array) {
+    // 结果数组
     var result = [];
+
+    // 传入的参数（数组）个数
     var argsLength = arguments.length;
+
     for (var i = 0, length = getLength(array); i < length; i++) {
+      // 遍历第一个数组的元素
       var item = array[i];
+
+      // 如果 result[] 中已经有 item 元素了，continue
+      // 即 array 中出现了相同的元素
+      // 返回的 result[] 其实是个 "集合"
       if (_.contains(result, item)) continue;
+
+      // 判断其他参数数组中是否都有 item 这个元素
       for (var j = 1; j < argsLength; j++) {
         if (!_.contains(arguments[j], item)) break;
       }
+      
+      // 遍历其他参数数组完毕
+      // j === argsLength 说明其他参数数组中都有 item 元素
+      // 则将其放入 result[] 中
       if (j === argsLength) result.push(item);
     }
+
     return result;
   };
 
@@ -934,22 +981,32 @@
   // Only the elements present in just the first array will remain.
   // _.difference(array, *others) 
   // Similar to without, but returns the values from array that are not present in the other arrays.
+  // ===== //
+  // _.difference([1, 2, 3, 4, 5], [5, 2, 10]);
+  // => [1, 3, 4]
+  // ===== /.
   // 剔除 array 数组中在 others 数组中出现的元素
   _.difference = function(array) {
-    // 将 others 数组展开
-    // 深度展开
+    // 将 others 数组深度展开
+    // rest[] 保存展开后的元素组成的数组
     // strict 参数为 true
     // 不可以这样用 _.difference([1, 2, 3, 4, 5], [5, 2], 10);
     // 10 就会取不到
     var rest = flatten(arguments, true, true, 1);
 
+    // 遍历 array，过滤
     return _.filter(array, function(value){
+      // 如果 value 存在在 rest 中，则过滤掉
       return !_.contains(rest, value);
     });
   };
   
   // Zip together multiple lists into a single array -- elements that share
   // an index go together.
+  // ===== //
+  // _.zip(['moe', 'larry', 'curly'], [30, 40, 50], [true, false, false]);
+  // => [["moe", 30, true], ["larry", 40, false], ["curly", 50, false]]
+  // ===== //
   // 将多个数组中相同位置的元素归类
   // 返回一个数组
   _.zip = function() {
@@ -962,8 +1019,10 @@
   // returns a series of new arrays, 
   // the first of which contains all of the first elements in the input arrays, 
   // the second of which contains all of the second elements, and so on.
+  // ===== //
   // _.unzip([["moe", 30, true], ["larry", 40, false], ["curly", 50, false]]);
   // => [['moe', 'larry', 'curly'], [30, 40, 50], [true, false, false]]
+  // ===== //
   _.unzip = function(array) {
     var length = array && _.max(array, getLength).length || 0;
     var result = Array(length);
@@ -1371,6 +1430,10 @@
 
   // Retrieve the names of an object's own properties.
   // Delegates to **ECMAScript 5**'s native `Object.keys`
+  // ===== //
+  // _.keys({one: 1, two: 2, three: 3});
+  // => ["one", "two", "three"]
+  // ===== //
   // 返回一个对象的 keys 组成的数组
   // 仅返回 own enumerable properties 组成的数组
   _.keys = function(obj) {
@@ -1400,6 +1463,14 @@
   };
 
   // Retrieve all the property names of an object.
+  /*
+  function Stooge(name) {
+    this.name = name;
+  }
+  Stooge.prototype.silly = true;
+  _.allKeys(new Stooge("Moe"));
+  => ["name", "silly"]
+  */
   // 返回一个对象的 keys 数组
   // 不仅仅是 own enumerable properties
   // 还包括原型链上继承的属性
@@ -1419,6 +1490,10 @@
   };
 
   // Retrieve the values of an object's properties.
+  // ===== //
+  // _.values({one: 1, two: 2, three: 3});
+  // => [1, 2, 3]
+  // ===== //
   // 将一个对象的所有 values 值放入数组中
   // 仅限 own properties 上的 values
   // 不包括原型链上的
@@ -2023,7 +2098,7 @@
   // 判断对象中是否有指定 key
   // own properties, not on a prototype
   _.has = function(obj, key) {
-    // obj 不能为 null
+    // obj 不能为 null 或者 undefined
     return obj != null && hasOwnProperty.call(obj, key);
   };
 
