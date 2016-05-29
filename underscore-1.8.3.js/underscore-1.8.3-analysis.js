@@ -871,13 +871,15 @@
   // Produce a duplicate-free version of the array. If the array has already
   // been sorted, you have the option of using a faster algorithm.
   // Aliased as `unique`.
+  // uniq_.uniq(array, [isSorted], [iteratee]) 
   // 数组去重
   // 如果第二个参数 `isSorted` 为 true
   // 则说明事先已经知道数组有序
   // 程序会跑一个更快的算法
   // 如果有第三个参数 iteratee，则对数组每个参数迭代
   // 对迭代之后的结果进行去重
-  // 返回去重后的数组
+  // 返回去重后的数组（是为 array 的子数组）
+  // PS: 暴露的 API 中没 context 参数
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
     // 没有传入 isSorted 参数
     // 转为 _.unique(array, false, undefined, iteratee)
@@ -896,7 +898,7 @@
     var result = [];
 
     // 已经出现过的元素（或者经过迭代过的值）
-    // 用来 hash 过滤
+    // 用来过滤重复值
     var seen = [];
 
     for (var i = 0, length = getLength(array); i < length; i++) {
@@ -908,6 +910,8 @@
       // 如果是有序数组，则当前元素只需跟上一个元素对比即可
       // 用 seen 变量保存上一个元素
       if (isSorted) {
+        // 如果 i === 0，则直接 push
+        // 否则比较当前元素是否和前一个元素相等
         if (!i || seen !== computed) result.push(value);
         // seen 保存当前元素，供下一次对比
         seen = computed;
@@ -1386,9 +1390,10 @@
   var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
   
   // IE < 9 下不能用 for in 来枚举的 key 值集合
-  // 其实还有个 `constructor`
+  // 其实还有个 `constructor` 属性
   // 个人觉得可能是 `constructor` 和其他属性不属于一类
   // nonEnumerableProps[] 中都是方法
+  // 而 constructor 表示的是对象的构造函数
   // 所以区分开来了
   var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
                       'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
@@ -1401,6 +1406,7 @@
     var nonEnumIdx = nonEnumerableProps.length;
     var constructor = obj.constructor;
 
+    // 获取对象的原型
     // 如果 obj 的 constructor 被重写
     // 则 proto 变量为 Object.prototype
     // 如果没有被重写
@@ -1409,14 +1415,14 @@
 
     // Constructor is a special case.
     // `constructor` 属性需要特殊处理 (是否有必要？)
-    // https://github.com/hanzichi/underscore-analysis/issues/3
+    // see https://github.com/hanzichi/underscore-analysis/issues/3
     // 如果 obj 有 `constructor` 这个 key
     // 并且该 key 没有在 keys 数组中
     // 存入 keys 数组
     var prop = 'constructor';
     if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
     
-    // 遍历nonEnumerableProps 数组中的 keys
+    // 遍历 nonEnumerableProps 数组中的 keys
     while (nonEnumIdx--) {
       prop = nonEnumerableProps[nonEnumIdx];
       // prop in obj 应该肯定返回 true 吧？是否有判断必要？
@@ -1463,14 +1469,6 @@
   };
 
   // Retrieve all the property names of an object.
-  /*
-  function Stooge(name) {
-    this.name = name;
-  }
-  Stooge.prototype.silly = true;
-  _.allKeys(new Stooge("Moe"));
-  => ["name", "silly"]
-  */
   // 返回一个对象的 keys 数组
   // 不仅仅是 own enumerable properties
   // 还包括原型链上继承的属性
