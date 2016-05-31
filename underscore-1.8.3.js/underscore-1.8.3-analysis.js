@@ -719,6 +719,8 @@
   // Array Functions
   // 数组的扩展方法
   // 共 20 个扩展方法
+  // Note: All array functions will also work on the arguments object. 
+  // However, Underscore functions are not designed to work on "sparse" arrays.
   // ---------------  
   
   // Get the first element of an array. Passing **n** will return the first N
@@ -1060,6 +1062,7 @@
     // 经典闭包
     return function(array, predicate, context) {
       predicate = cb(predicate, context);
+
       var length = getLength(array);
 
       // 根据 dir 变量来确定数组遍历的起始位置
@@ -1078,10 +1081,12 @@
   // Returns the first index on an array-like that passes a predicate test
   // 从前往后找到数组中 `第一个满足条件` 的元素，并返回下标值
   // 没找到返回 -1
+  // _.findIndex(array, predicate, [context]) 
   _.findIndex = createPredicateIndexFinder(1);
 
   // 从后往前找到数组中 `第一个满足条件` 的元素，并返回下标值
   // 没找到返回 -1
+  // _.findLastIndex(array, predicate, [context]) 
   _.findLastIndex = createPredicateIndexFinder(-1);
 
   // Use a comparator function to figure out the smallest index at which
@@ -1099,6 +1104,7 @@
   // 二分查找
   // 将一个元素插入已排序的数组
   // 返回该插入的位置下标
+  // _.sortedIndex(list, value, [iteratee], [context]) 
   _.sortedIndex = function(array, obj, iteratee, context) {
     // 注意 cb 方法
     // iteratee 为空 || 为 String 类型（key 值）时会返回不同方法
@@ -1124,23 +1130,28 @@
 
     // API 调用形式
     // _.indexOf(array, value, [isSorted]) 
+    // _.indexOf(array, value, [fromIndex]) 
     // _.lastIndexOf(array, value, [fromIndex]) 
     return function(array, item, idx) {
       var i = 0, length = getLength(array);
 
       // 如果 idx 为 Number 类型
       // 则规定查找位置的起始点
-      // 那么第三个参数可不能表示 `有序` 了
+      // 那么第三个参数不是 [isSorted]
       // 所以不能用二分查找优化了
+      // 只能遍历查找
       if (typeof idx == 'number') {
         if (dir > 0) { // 正向查找
+          // 重置查找起始位置
           i = idx >= 0 ? idx : Math.max(idx + length, i);
         } else { // 反向查找
           // 如果是反向查找，根据起始查找位置（即 idx 参数）重置 length 属性值
           length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
         }
       } else if (sortedIndex && idx && length) {
-        // 正向查找 & 有序 & 规定了起始位置
+        // 能用二分查找加速的条件
+        // 正向查找 & 有序 & length !== 0
+        
         // 用 _.sortIndex 找到有序数组中 item 正好插入的位置
         idx = sortedIndex(array, item);
 
@@ -1178,7 +1189,7 @@
   // 找到数组 array 中 value 第一次出现的位置
   // 并返回其下标值
   // 如果数组有序，则第三个参数可以传入 true
-  // 这样算法效率会更高
+  // 这样算法效率会更高（二分查找）
   // [isSorted] 参数表示数组是否有序
   // 同时第三个参数也可以表示 [fromIndex] （见下面的 _.lastIndexOf）
   _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
