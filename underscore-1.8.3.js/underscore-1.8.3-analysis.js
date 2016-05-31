@@ -794,7 +794,7 @@
   // flatten(arguments, true, true, 1)
   // flatten(arguments, true, true)
   // flatten(arguments, false, false, 1)
-  // ===========================//
+  // =====//
   // input => Array 或者 arguments
   // shallow => 是否只展开一层
   // strict === true，说明需要展开的是纯数组
@@ -1054,66 +1054,118 @@
   };
   
   // Generator function to create the findIndex and findLastIndex functions
-  // dir === 1 从前往后找 
-  // dir === -1 从后往前找
+  // dir === 1 => 从前往后找 
+  // dir === -1 => 从后往前找
   function createPredicateIndexFinder(dir) {
+    // 经典闭包
     return function(array, predicate, context) {
       predicate = cb(predicate, context);
       var length = getLength(array);
+
+      // 根据 dir 变量来确定数组遍历的起始位置
       var index = dir > 0 ? 0 : length - 1;
+
       for (; index >= 0 && index < length; index += dir) {
+        // 找到第一个符合条件的元素
+        // 并返回下标值
         if (predicate(array[index], index, array)) return index;
       }
+
       return -1;
     };
   }
 
   // Returns the first index on an array-like that passes a predicate test
-  // 从前往后找到数组中第一个满足条件的元素，并返回下标值
+  // 从前往后找到数组中 `第一个满足条件` 的元素，并返回下标值
   // 没找到返回 -1
   _.findIndex = createPredicateIndexFinder(1);
 
-  // 从后往前找到数组中第一个满足条件的元素，并返回下标值
+  // 从后往前找到数组中 `第一个满足条件` 的元素，并返回下标值
   // 没找到返回 -1
   _.findLastIndex = createPredicateIndexFinder(-1);
 
   // Use a comparator function to figure out the smallest index at which
   // an object should be inserted so as to maintain order. Uses binary search.
+  // sortedIndex_.sortedIndex(list, value, [iteratee], [context]) 
+  // The iteratee may also be the string name of the property to sort by (eg. length).
+  // ===== //
+  // _.sortedIndex([10, 20, 30, 40, 50], 35);
+  // => 3
+  // ===== //
+  // var stooges = [{name: 'moe', age: 40}, {name: 'curly', age: 60}];
+  // _.sortedIndex(stooges, {name: 'larry', age: 50}, 'age');
+  // => 1
+  // ===== //
   // 二分查找
   // 将一个元素插入已排序的数组
   // 返回该插入的位置下标
   _.sortedIndex = function(array, obj, iteratee, context) {
+    // 注意 cb 方法
+    // iteratee 为空 || 为 String 类型（key 值）时会返回不同方法
     iteratee = cb(iteratee, context, 1);
+
+    // 经过迭代函数计算的值
     var value = iteratee(obj);
+
     var low = 0, high = getLength(array);
+
     while (low < high) {
       var mid = Math.floor((low + high) / 2);
       if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
     }
+
     return low;
   };
 
   // Generator function to create the indexOf and lastIndexOf functions
+  // _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
+  // _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
   function createIndexFinder(dir, predicateFind, sortedIndex) {
+
+    // API 调用形式
+    // _.indexOf(array, value, [isSorted]) 
+    // _.lastIndexOf(array, value, [fromIndex]) 
     return function(array, item, idx) {
       var i = 0, length = getLength(array);
+
+      // 如果 idx 为 Number 类型
+      // 则规定查找位置的起始点
+      // 那么第三个参数可不能表示 `有序` 了
+      // 所以不能用二分查找优化了
       if (typeof idx == 'number') {
-        if (dir > 0) {
-            i = idx >= 0 ? idx : Math.max(idx + length, i);
-        } else {
-            length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
+        if (dir > 0) { // 正向查找
+          i = idx >= 0 ? idx : Math.max(idx + length, i);
+        } else { // 反向查找
+          // 如果是反向查找，根据起始查找位置（即 idx 参数）重置 length 属性值
+          length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
         }
       } else if (sortedIndex && idx && length) {
+        // 正向查找 & 有序 & 规定了起始位置
+        // 用 _.sortIndex 找到有序数组中 item 正好插入的位置
         idx = sortedIndex(array, item);
+
+        // 如果正好插入的位置的值和 item 刚好相等
+        // 说明该位置就是 item 第一次出现的位置
+        // 返回下标
         return array[idx] === item ? idx : -1;
       }
+
+      // 特判，如果要查找的元素是 NaN 类型
+      // 如果 item !== item
+      // 那么 item => NaN
       if (item !== item) {
         idx = predicateFind(slice.call(array, i, length), _.isNaN);
         return idx >= 0 ? idx + i : -1;
       }
+
+      // O(n) 遍历数组
+      // 寻找和 item 相同的元素
+      // 特判排除了 item 为 NaN 的情况
+      // 可以放心地用 `===` 来判断是否相等了
       for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
         if (array[idx] === item) return idx;
       }
+
       return -1;
     };
   }
@@ -1122,7 +1174,19 @@
   // or -1 if the item is not included in the array.
   // If the array is large and already in sort order, pass `true`
   // for **isSorted** to use binary search.
+  // _.indexOf(array, value, [isSorted]) 
+  // 找到数组 array 中 value 第一次出现的位置
+  // 并返回其下标值
+  // 如果数组有序，则第三个参数可以传入 true
+  // 这样算法效率会更高
+  // [isSorted] 参数表示数组是否有序
+  // 同时第三个参数也可以表示 [fromIndex] （见下面的 _.lastIndexOf）
   _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
+
+  // 和 _indexOf 相似
+  // 反序查找
+  // _.lastIndexOf(array, value, [fromIndex]) 
+  // fromIndex 参数表示从倒数第几个开始往前找
   _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
 
   // Generate an integer Array containing an arithmetic progression. A port of
@@ -1134,9 +1198,13 @@
       stop = start || 0;
       start = 0;
     }
+
     step = step || 1;
 
+    // 返回数组的长度
     var length = Math.max(Math.ceil((stop - start) / step), 0);
+
+    // 返回的数组
     var range = Array(length);
 
     for (var idx = 0; idx < length; idx++, start += step) {
@@ -1146,6 +1214,7 @@
     return range;
   };
   
+
   // Function (ahem) Functions
   // 函数的扩展方法
   // 共 14 个扩展方法
