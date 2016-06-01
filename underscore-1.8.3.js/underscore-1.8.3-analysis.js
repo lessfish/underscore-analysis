@@ -3,6 +3,7 @@
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
 //     中文注释 by hanzichi @https://github.com/hanzichi
+//     我的源码解读顺序（跟系列解读文章相对应）
 //     Object -> Array -> Collection -> Function -> Utility
 
 (function() {
@@ -15,7 +16,7 @@
   // 将 this 赋值给局部变量 root
   // root 的值, 客户端为 `window`, 服务端(node) 中为 `exports`
   var root = this;
-
+  
   // Save the previous value of the `_` variable.
   // 将原来全局环境中的变量 `_` 赋值给变量 previousUnderscore 进行缓存 
   // 在后面的 noConflict 方法中有用到
@@ -1151,7 +1152,7 @@
       } else if (sortedIndex && idx && length) {
         // 能用二分查找加速的条件
         // 正向查找 & 有序 & length !== 0
-        
+
         // 用 _.sortIndex 找到有序数组中 item 正好插入的位置
         idx = sortedIndex(array, item);
 
