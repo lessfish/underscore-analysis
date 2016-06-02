@@ -1092,7 +1092,6 @@
 
   // Use a comparator function to figure out the smallest index at which
   // an object should be inserted so as to maintain order. Uses binary search.
-  // sortedIndex_.sortedIndex(list, value, [iteratee], [context]) 
   // The iteratee may also be the string name of the property to sort by (eg. length).
   // ===== //
   // _.sortedIndex([10, 20, 30, 40, 50], 35);
@@ -1118,7 +1117,10 @@
 
     while (low < high) {
       var mid = Math.floor((low + high) / 2);
-      if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
+      if (iteratee(array[mid]) < value) 
+        low = mid + 1; 
+      else 
+        high = mid;
     }
 
     return low;
@@ -1143,10 +1145,10 @@
       // 只能遍历查找
       if (typeof idx == 'number') {
         if (dir > 0) { // 正向查找
-          // 重置查找起始位置
+          // 重置查找的起始位置
           i = idx >= 0 ? idx : Math.max(idx + length, i);
         } else { // 反向查找
-          // 如果是反向查找，根据起始查找位置（即 idx 参数）重置 length 属性值
+          // 如果是反向查找，重置 length 属性值
           length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
         }
       } else if (sortedIndex && idx && length) {
@@ -1159,6 +1161,7 @@
         // 如果正好插入的位置的值和 item 刚好相等
         // 说明该位置就是 item 第一次出现的位置
         // 返回下标
+        // 否则即是没找到，返回 -1
         return array[idx] === item ? idx : -1;
       }
 
@@ -1198,7 +1201,7 @@
   // 和 _indexOf 相似
   // 反序查找
   // _.lastIndexOf(array, value, [fromIndex]) 
-  // fromIndex 参数表示从倒数第几个开始往前找
+  // [fromIndex] 参数表示从倒数第几个开始往前找
   _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
 
   // Generate an integer Array containing an arithmetic progression. A port of
