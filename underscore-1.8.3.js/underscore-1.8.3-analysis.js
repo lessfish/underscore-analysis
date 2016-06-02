@@ -219,8 +219,8 @@
   // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
   // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
 
-  // JavaScript 数组最大索引
-  // 同时也是 JavaScript 中能精确表示的最大数字
+  // Math.pow(2, 53) - 1 是 JavaScript 中能精确表示的最大数字
+  // 
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
 
   // getLength 函数
@@ -1072,7 +1072,8 @@
       for (; index >= 0 && index < length; index += dir) {
         // 找到第一个符合条件的元素
         // 并返回下标值
-        if (predicate(array[index], index, array)) return index;
+        if (predicate(array[index], index, array)) 
+          return index;
       }
 
       return -1;
@@ -1111,10 +1112,12 @@
     iteratee = cb(iteratee, context, 1);
 
     // 经过迭代函数计算的值
+    // 可打印 iteratee 出来看看
     var value = iteratee(obj);
 
     var low = 0, high = getLength(array);
 
+    // 二分查找
     while (low < high) {
       var mid = Math.floor((low + high) / 2);
       if (iteratee(array[mid]) < value) 
@@ -1153,7 +1156,7 @@
         }
       } else if (sortedIndex && idx && length) {
         // 能用二分查找加速的条件
-        // 正向查找 & 有序 & length !== 0
+        // 有序 & idx !== 0 && length !== 0
 
         // 用 _.sortIndex 找到有序数组中 item 正好插入的位置
         idx = sortedIndex(array, item);
