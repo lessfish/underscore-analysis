@@ -20,6 +20,7 @@
 - [内部方法 createAssigner 详解 (2016-05-24)](https://github.com/hanzichi/underscore-analysis/issues/4)
 - [JavaScript 中是如何比较两个元素是否 "相同" 的 (2016-05-25)](https://github.com/hanzichi/underscore-analysis/issues/5)
 - [Object Functions 相关源码拾遗 & 小结 (2016-05-26)](https://github.com/hanzichi/underscore-analysis/issues/6)
+- [如何优雅地写一个『在数组中寻找指定元素』的方法 (2016-06-02)](https://github.com/hanzichi/underscore-analysis/issues/8)
 
 
 
