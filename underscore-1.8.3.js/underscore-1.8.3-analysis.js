@@ -732,7 +732,7 @@
   _.first = _.head = _.take = function(array, n, guard) {
     // 容错，数组为空则返回 undefined
     if (array == null) return void 0;
-
+    
     // 没指定参数 n，则默认返回第一个元素
     if (n == null || guard) return array[0];
 
@@ -750,7 +750,7 @@
   _.initial = function(array, n, guard) {
     return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)));
   };
-
+  
   // Get the last element of an array. Passing **n** will return the last N
   // values in the array.
   // 返回数组最后一个元素
@@ -874,15 +874,15 @@
   // Produce a duplicate-free version of the array. If the array has already
   // been sorted, you have the option of using a faster algorithm.
   // Aliased as `unique`.
-  // uniq_.uniq(array, [isSorted], [iteratee]) 
   // 数组去重
   // 如果第二个参数 `isSorted` 为 true
   // 则说明事先已经知道数组有序
-  // 程序会跑一个更快的算法
+  // 程序会跑一个更快的算法（元素和数组前一个元素比较即可）
   // 如果有第三个参数 iteratee，则对数组每个参数迭代
   // 对迭代之后的结果进行去重
   // 返回去重后的数组（是为 array 的子数组）
   // PS: 暴露的 API 中没 context 参数
+  // _.uniq(array, [isSorted], [iteratee]) 
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
     // 没有传入 isSorted 参数
     // 转为 _.unique(array, false, undefined, iteratee)
