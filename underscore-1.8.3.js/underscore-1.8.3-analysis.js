@@ -794,6 +794,7 @@
   // Internal implementation of a recursive `flatten` function.
   // 递归调用数组，将数组展开
   // 即 [1, 2, [3, 4]] => [1, 2, 3, 4]
+  // flatten(array, shallow, false)
   // flatten(arguments, true, true, 1)
   // flatten(arguments, true, true)
   // flatten(arguments, false, false, 1)
@@ -818,11 +819,11 @@
         // 则表示需深度展开
         // 继续递归展开
         if (!shallow) 
-          // value 重写赋值
           // flatten 返回数组
+          // 将上面定义的 value 重新赋值
           value = flatten(value, shallow, strict);
 
-        // 递归展开到最后一层
+        // 递归展开到最后一层（没有嵌套的数组了）
         // 或者 (shallow === true) => 只展开一层
         var j = 0, len = value.length;
 
@@ -832,7 +833,10 @@
         while (j < len) {
           output[idx++] = value[j++];
         }
-      } else if (!strict) { // !strict 为 true，说明 value 不是数组（是基本类型）
+      } else if (!strict) { 
+        // !strict 为 true，则 strict 为 false
+        // 说明 value 不是数组（是基本类型）
+        // 直接加到 output 数组中即可
         output[idx++] = value;
       }
     }
@@ -866,7 +870,7 @@
   // 返回移除后的数组副本
   _.without = function(array) {
     // slice.call(arguments, 1)
-    // 将 arguments 转为数组（去掉第一个元素）
+    // 将 arguments 转为数组（同时去掉第一个元素）
     // 之后便可以调用 _.difference 方法
     return _.difference(array, slice.call(arguments, 1));
   };
@@ -877,10 +881,10 @@
   // 数组去重
   // 如果第二个参数 `isSorted` 为 true
   // 则说明事先已经知道数组有序
-  // 程序会跑一个更快的算法（元素和数组前一个元素比较即可）
-  // 如果有第三个参数 iteratee，则对数组每个参数迭代
+  // 程序会跑一个更快的算法（一次线性比较，元素和数组前一个元素比较即可）
+  // 如果有第三个参数 iteratee，则对数组每个元素迭代
   // 对迭代之后的结果进行去重
-  // 返回去重后的数组（是为 array 的子数组）
+  // 返回去重后的数组（array 的子数组）
   // PS: 暴露的 API 中没 context 参数
   // _.uniq(array, [isSorted], [iteratee]) 
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
@@ -908,12 +912,13 @@
       var value = array[i],
           // 如果指定了迭代函数
           // 则对数组每一个元素进行迭代
+          // 迭代函数传入的三个参数通常是 value, index, array 形式
           computed = iteratee ? iteratee(value, i, array) : value;
 
       // 如果是有序数组，则当前元素只需跟上一个元素对比即可
       // 用 seen 变量保存上一个元素
       if (isSorted) {
-        // 如果 i === 0，则直接 push
+        // 如果 i === 0，是第一个元素，则直接 push
         // 否则比较当前元素是否和前一个元素相等
         if (!i || seen !== computed) result.push(value);
         // seen 保存当前元素，供下一次对比
@@ -947,6 +952,11 @@
   _.union = function() {
     // 首先用 flatten 方法将传入的数组展开成一个数组
     // 然后就可以愉快地调用 _.uniq 方法了
+    // 假设 _.union([1, 2, 3], [101, 2, 1, 10], [2, 1]);
+    // arguments 为 [[1, 2, 3], [101, 2, 1, 10], [2, 1]]
+    // shodow 为 true，展开一层
+    // 结果为 [1, 2, 3, 101, 2, 1, 10, 2, 1]
+    // 然后对其去重
     return _.uniq(flatten(arguments, true, true));
   };
 
@@ -954,6 +964,10 @@
   // passed-in arrays.
   // 寻找几个数组中共有的元素
   // 将这些每个数组中都有的元素存入另一个数组中返回
+  // _.intersection(*arrays) 
+  // _.intersection([1, 2, 3, 1], [101, 2, 1, 10, 1], [2, 1, 1])
+  // => [1, 2]
+  // 注意：返回的结果数组是去重的
   _.intersection = function(array) {
     // 结果数组
     var result = [];
@@ -961,13 +975,13 @@
     // 传入的参数（数组）个数
     var argsLength = arguments.length;
 
+     // 遍历第一个数组的元素
     for (var i = 0, length = getLength(array); i < length; i++) {
-      // 遍历第一个数组的元素
       var item = array[i];
 
       // 如果 result[] 中已经有 item 元素了，continue
       // 即 array 中出现了相同的元素
-      // 返回的 result[] 其实是个 "集合"
+      // 返回的 result[] 其实是个 "集合"（是去重的）
       if (_.contains(result, item)) continue;
 
       // 判断其他参数数组中是否都有 item 这个元素
@@ -991,7 +1005,7 @@
   // ===== //
   // _.difference([1, 2, 3, 4, 5], [5, 2, 10]);
   // => [1, 3, 4]
-  // ===== /.
+  // ===== //
   // 剔除 array 数组中在 others 数组中出现的元素
   _.difference = function(array) {
     // 将 others 数组深度展开
@@ -1057,8 +1071,8 @@
   };
   
   // Generator function to create the findIndex and findLastIndex functions
-  // dir === 1 => 从前往后找 
-  // dir === -1 => 从后往前找
+  // (dir === 1) => 从前往后找 
+  // (dir === -1) => 从后往前找
   function createPredicateIndexFinder(dir) {
     // 经典闭包
     return function(array, predicate, context) {
