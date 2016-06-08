@@ -798,18 +798,23 @@
   // flatten(arguments, true, true, 1)
   // flatten(arguments, true, true)
   // flatten(arguments, false, false, 1)
-  // =====//
+  // ===== //
   // input => Array 或者 arguments
   // shallow => 是否只展开一层
   // strict === true，说明需要展开的是纯数组
   // strict === false，说明需要保存的可能有单个键值
   // startIndex => 从 input 的第几项开始展开
+  // ===== //
+  // 可以看到，如果 strict 参数为 true，那么 shallow 也为 true
+  // 也就是展开一层，同时把非数组过滤
+  // [[1, 2], [3, 4], 5, 6] => [1, 2, 3, 4]
   var flatten = function(input, shallow, strict, startIndex) {
     // output 数组保存结果
     // 即 flatten 方法返回数据
     // idx 为 output 的累计数组下标
     var output = [], idx = 0;
 
+    // 根据 startIndex 变量确定需要展开的起始位置
     for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
       var value = input[i];
       // 数组 或者 arguments
@@ -827,6 +832,9 @@
         // 或者 (shallow === true) => 只展开一层
         var j = 0, len = value.length;
 
+        // 这一步貌似没有必要
+        // 毕竟 JavaScript 的数组会自动扩充
+        // 但是这样写，感觉比较好，对于元素的 push 有个比较清晰的认识
         output.length += len;
 
         // 将 value 数组的元素添加到 output 数组中
@@ -837,6 +845,7 @@
         // !strict 为 true，则 strict 为 false
         // 说明 value 不是数组（是基本类型）
         // 直接加到 output 数组中即可
+        // 设置 strict 参数为 true 可以过滤非数组参数
         output[idx++] = value;
       }
     }
@@ -954,7 +963,7 @@
     // 然后就可以愉快地调用 _.uniq 方法了
     // 假设 _.union([1, 2, 3], [101, 2, 1, 10], [2, 1]);
     // arguments 为 [[1, 2, 3], [101, 2, 1, 10], [2, 1]]
-    // shodow 为 true，展开一层
+    // shadow 参数为 true，展开一层
     // 结果为 [1, 2, 3, 101, 2, 1, 10, 2, 1]
     // 然后对其去重
     return _.uniq(flatten(arguments, true, true));
