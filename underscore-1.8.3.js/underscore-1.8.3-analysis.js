@@ -801,8 +801,10 @@
   // ===== //
   // input => Array 或者 arguments
   // shallow => 是否只展开一层
-  // strict === true，说明需要展开的是纯数组
-  // strict === false，说明需要保存的可能有单个键值
+  // strict === true，通常和 shallow === true 配合使用
+  // 表示只展开一层，但是不保存非数组元素（即无法展开的基础类型）
+  // flatten([[1, 2], 3, 4], true, true) => [1, 2]
+  // flatten([[1, 2], 3, 4], false, true) = > []
   // startIndex => 从 input 的第几项开始展开
   // ===== //
   // 可以看到，如果 strict 参数为 true，那么 shallow 也为 true
@@ -820,7 +822,7 @@
       // 数组 或者 arguments
       if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
         // flatten current level of array or arguments object
-        // !shallow 为 true，即 shallow 值为 false
+        // (!shallow === true) => (shallow === false)
         // 则表示需深度展开
         // 继续递归展开
         if (!shallow) 
@@ -830,11 +832,12 @@
 
         // 递归展开到最后一层（没有嵌套的数组了）
         // 或者 (shallow === true) => 只展开一层
+        // value 值肯定是一个数组
         var j = 0, len = value.length;
 
         // 这一步貌似没有必要
         // 毕竟 JavaScript 的数组会自动扩充
-        // 但是这样写，感觉比较好，对于元素的 push 有个比较清晰的认识
+        // 但是这样写，感觉比较好，对于元素的 push 过程有个比较清晰的认识
         output.length += len;
 
         // 将 value 数组的元素添加到 output 数组中
@@ -842,10 +845,13 @@
           output[idx++] = value[j++];
         }
       } else if (!strict) { 
-        // !strict 为 true，则 strict 为 false
-        // 说明 value 不是数组（是基本类型）
-        // 直接加到 output 数组中即可
-        // 设置 strict 参数为 true 可以过滤非数组参数
+        // (!strict === true) => (strict === false)
+        // 如果是深度展开，即 shallow 参数为 false
+        // 那么当最后 value 不是数组，是基本类型时
+        // 肯定会走到这个 else-if 判断中
+        // 而如果此时 strict 为 true，则不能跳到这个分支内部
+        // 所以 shallow === false 如果和 strict === true 搭配
+        // 得到的结果永远是空数组 []
         output[idx++] = value;
       }
     }
@@ -963,7 +969,7 @@
     // 然后就可以愉快地调用 _.uniq 方法了
     // 假设 _.union([1, 2, 3], [101, 2, 1, 10], [2, 1]);
     // arguments 为 [[1, 2, 3], [101, 2, 1, 10], [2, 1]]
-    // shadow 参数为 true，展开一层
+    // shallow 参数为 true，展开一层
     // 结果为 [1, 2, 3, 101, 2, 1, 10, 2, 1]
     // 然后对其去重
     return _.uniq(flatten(arguments, true, true));
