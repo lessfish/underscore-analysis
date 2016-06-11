@@ -716,7 +716,7 @@
     return [pass, fail];
   };
 
-
+  
   // Array Functions
   // 数组的扩展方法
   // 共 20 个扩展方法
@@ -826,7 +826,7 @@
         // 则表示需深度展开
         // 继续递归展开
         if (!shallow) 
-          // flatten 返回数组
+          // flatten 方法返回数组
           // 将上面定义的 value 重新赋值
           value = flatten(value, shallow, strict);
 
@@ -851,7 +851,7 @@
         // 肯定会走到这个 else-if 判断中
         // 而如果此时 strict 为 true，则不能跳到这个分支内部
         // 所以 shallow === false 如果和 strict === true 搭配
-        // 得到的结果永远是空数组 []
+        // 调用 flatten 方法得到的结果永远是空数组 []
         output[idx++] = value;
       }
     }
@@ -1012,7 +1012,7 @@
 
     return result;
   };
-
+  
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   // _.difference(array, *others) 
@@ -1029,7 +1029,7 @@
     // 不可以这样用 _.difference([1, 2, 3, 4, 5], [5, 2], 10);
     // 10 就会取不到
     var rest = flatten(arguments, true, true, 1);
-
+    
     // 遍历 array，过滤
     return _.filter(array, function(value){
       // 如果 value 存在在 rest 中，则过滤掉
@@ -1787,11 +1787,11 @@
     return result;
   };
 
-   // Return a copy of the object without the blacklisted properties.
-   // 跟 _.pick 方法相对
-   // 返回 _.pick 的补集
-   // 即返回没有指定 keys 值的对象副本
-   // 或者返回不能通过 predicate 函数的对象副本
+  // Return a copy of the object without the blacklisted properties.
+  // 跟 _.pick 方法相对
+  // 返回 _.pick 的补集
+  // 即返回没有指定 keys 值的对象副本
+  // 或者返回不能通过 predicate 函数的对象副本
   _.omit = function(obj, iteratee, context) {
     if (_.isFunction(iteratee)) {
       // _.negate 方法对 iteratee 的结果取反
