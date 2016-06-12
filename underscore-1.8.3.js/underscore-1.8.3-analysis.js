@@ -193,7 +193,7 @@
   };
 
   // An internal function for creating a new object that inherits from another.
-  // _.create
+  // use in `_.create`
   var baseCreate = function(prototype) {
     // 如果 prototype 参数不是对象
     if (!_.isObject(prototype)) return {};
@@ -237,6 +237,7 @@
     var length = getLength(collection);
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
   };
+
 
   // Collection Functions
   // 数组或者对象的扩展方法
@@ -716,7 +717,7 @@
     return [pass, fail];
   };
 
-  
+
   // Array Functions
   // 数组的扩展方法
   // 共 20 个扩展方法
@@ -820,6 +821,7 @@
     for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
       var value = input[i];
       // 数组 或者 arguments
+      // 注意 isArrayLike 还包括 {length: 10} 这样的，过滤掉
       if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
         // flatten current level of array or arguments object
         // (!shallow === true) => (shallow === false)
@@ -1023,7 +1025,7 @@
   // ===== //
   // 剔除 array 数组中在 others 数组中出现的元素
   _.difference = function(array) {
-    // 将 others 数组深度展开
+    // 将 others 数组展开一层
     // rest[] 保存展开后的元素组成的数组
     // strict 参数为 true
     // 不可以这样用 _.difference([1, 2, 3, 4, 5], [5, 2], 10);
@@ -1491,7 +1493,7 @@
   // 函数至多只能被调用一次
   _.once = _.partial(_.before, 2);
 
-  
+
   // Object Functions
   // 对象的扩展方法
   // 共 38 个扩展方法
