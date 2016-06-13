@@ -33,3 +33,4 @@
 - 2016-05-16 『underscore-1.8.3.js 系列解读』第一篇 [『为什么用 void 0 代替 undefined』](https://github.com/hanzichi/underscore-analysis/issues/1) 发表
 - 2016-05-26 Star 100
 - 2016-06-06 Star 200
+- 2016-06-13 Star 300

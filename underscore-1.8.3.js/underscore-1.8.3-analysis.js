@@ -228,12 +228,12 @@
   // 用来获取数组（类数组）长度
   var getLength = property('length');
 
-  // 判断是否是数组或者类数组
-  // 如果是，则返回 true
-  // 类数组包括 arguments、HTML Collection 以及 NodeList
-  // 不能传入一个带有 length 属性，并且属性值是 number 类型的对象
+  // 判断是否是类数组（array-like）
+  // 类数组，即拥有 length 属性并且 length 属性值为 Number 类型的元素
+  // 包括数组、arguments、HTML Collection 以及 NodeList
+  // 特别要注意的是，还包括类似 {length: 10} 这样的对象！
   var isArrayLike = function(collection) {
-    // 返回 collection 的 length 属性值
+    // 返回参数 collection 的 length 属性值
     var length = getLength(collection);
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
   };
@@ -251,10 +251,10 @@
   // 遍历数组或者对象的每个元素
   // 第一个参数为数组（包括类数组）或者对象
   // 第二个参数为迭代方法，对数组或者对象每个元素都执行该方法
-  // 该方法又能传入三个参数，分别为 item、index、array（value、key、obj）
+  // 该方法又能传入三个参数，分别为 item、index、array（(value、key、obj) for object）
   // 与 ES5 中 forEach 方法传参格式一致
   // 第三个参数（可省略）确定第二个参数 iteratee 函数中的（可能有的）this 指向
-  // 即 iteratee 中所有 this 都指向 context
+  // 即 iteratee 中出现的（如果有）所有 this 都指向 context
   // notice: 不要传入一个带有 key 类型为 number 的对象！
   // notice: _.each 方法不能用 return 跳出循环
   _.each = _.forEach = function(obj, iteratee, context) {
@@ -263,7 +263,8 @@
 
     var i, length;
 
-    // 如果是数组或者类数组
+    // 如果是类数组
+    // 默认不会传入类似 {length: 10} 这样的数据
     if (isArrayLike(obj)) {
       // 遍历
       for (i = 0, length = obj.length; i < length; i++) {
@@ -278,14 +279,16 @@
         iteratee(obj[keys[i]], keys[i], obj); // (value, key, obj)
       }
     }
-    // 返回 obj 以支持链式调用
+    // 返回 obj 参数
+    // 供链式调用？
+    // 貌似 Array.prototype.forEach 没有返回值？
     return obj;
   };
 
   // Return the results of applying the iteratee to each element.
-  // 与 ES5 中 Array.map 使用方法类似
-  // 传参与 each 方法类似
-  // 遍历数组（每个元素）或者对象的每个元素（values）
+  // 与 ES5 中 Array.prototype.map 使用方法类似
+  // 传参形式与 each 方法类似
+  // 遍历数组（每个元素）或者对象的每个元素（value）
   // 对每个元素执行 iteratee 迭代方法
   // 将结果保存到新的数组中
   _.map = _.collect = function(obj, iteratee, context) {
@@ -294,14 +297,19 @@
 
     // 如果传参是对象，则获取它的 keys 值数组（短路表达式）
     var keys = !isArrayLike(obj) && _.keys(obj),
+        // 如果 obj 为对象，则 length 为 key.length
+        // 如果 obj 为数组，则 length 为 obj.length
         length = (keys || obj).length,
         results = Array(length); // 结果数组
+
     // 遍历
     for (var index = 0; index < length; index++) {
-      // 判断是数组还是对象
+      // 如果 obj 为对象，则 currentKey 为对象键值
+      // 如果 obj 为数组，则 currentKey 为 index 值
       var currentKey = keys ? keys[index] : index;
       results[index] = iteratee(obj[currentKey], currentKey, obj);
     }
+
     // 返回新的结果数组
     return results;
   };
@@ -348,9 +356,9 @@
 
   // **Reduce** builds up a single result from a list of values, aka `inject`,
   // or `foldl`.
-  // 与 ES5 中 Array.reduce 使用方法类似
+  // 与 ES5 中 Array.prototype.reduce 使用方法类似
   // reduce 方法最多可传入 4 个参数
-  // 其中前三个参数传递与 Array.reduce 传参类似（第三个可选）
+  // 其中前三个参数传递与 Array.prototype.reduce 传参类似（第三个可选）
   // 第四个可选参数可指定迭代方法中的 this 指向
   _.reduce = _.foldl = _.inject = createReduce(1);
 
@@ -378,7 +386,7 @@
 
   // Return all the elements that pass a truth test.
   // Aliased as `select`.
-  // 与 ES5 中 Array.filter 使用方法类似
+  // 与 ES5 中 Array.prototype.filter 使用方法类似
   // 寻找数组或者对象中所有满足条件的元素
   // 如果是数组，则将 `元素值` 存入数组
   // 如果是对象，则将 `value 值` 存入数组
@@ -400,7 +408,6 @@
   // Return all the elements for which a truth test fails.
   // 寻找数组或者对象中所有不满足条件的元素
   // 并以数组方式返回
-  // 与 filter 方法相对
   // 求得结果是 filter 方法的补集
   _.reject = function(obj, predicate, context) {
     return _.filter(obj, _.negate(cb(predicate)), context);
@@ -408,15 +415,16 @@
 
   // Determine whether all of the elements match a truth test.
   // Aliased as `all`.
-  // 与 ES5 中的 Array.every 方法类似
-  // 判断数组中的每个元素或者对象中每个 values 值是否都满足 predicate 函数中的判断条件
-  // 如果是，则返回 ture；否则返回 false
+  // 与 ES5 中的 Array.prototype.every 方法类似
+  // 判断数组中的每个元素或者对象中每个 value 值是否都满足 predicate 函数中的判断条件
+  // 如果是，则返回 ture；否则返回 false（有一个不满足就返回 false）
   _.every = _.all = function(obj, predicate, context) {
     // 根据 this 指向，返回相应 predicate 函数
     predicate = cb(predicate, context);
 
     var keys = !isArrayLike(obj) && _.keys(obj),
         length = (keys || obj).length;
+
     for (var index = 0; index < length; index++) {
       var currentKey = keys ? keys[index] : index;
       // 如果有一个不能满足 predicate 中的条件
@@ -428,8 +436,8 @@
 
   // Determine if at least one element in the object matches a truth test.
   // Aliased as `any`.
-  // 与 ES5 中 Array.some 方法类似
-  // 判断数组或者对象中是否有一个元素（values 值）满足 predicate 函数中的条件
+  // 与 ES5 中 Array.prototype.some 方法类似
+  // 判断数组或者对象中是否有一个元素（value 值 for object）满足 predicate 函数中的条件
   // 如果是则返回 true；否则返回 false
   _.some = _.any = function(obj, predicate, context) {
     // 根据 context 返回 predicate 函数
@@ -448,6 +456,7 @@
   // Determine if the array or object contains a given item (using `===`).
   // Aliased as `includes` and `include`.
   // 判断数组或者对象中（value 值）是否有指定元素
+  // 如果是 object，则忽略了 key 值，只需要查找 value 值即可
   // 返回布尔值
   _.contains = _.includes = _.include = function(obj, item, fromIndex, guard) {
     // 如果是对象，返回 values 组成的数组
@@ -463,14 +472,14 @@
   };
 
   // Invoke a method (with arguments) on every item in a collection.
-  // invoke_.invoke(list, methodName, *arguments) 
+  // _.invoke(list, methodName, *arguments) 
   // Calls the method named by methodName on each value in the list.
   // Any extra arguments passed to invoke will be forwarded on to the method invocation.
   // 数组或者对象中的每个元素都调用 method 方法
   // 返回调用后的结果（数组或者关联数组）
   // method 参数后的参数会被当做参数传入 method 方法中
   _.invoke = function(obj, method) {
-    // method 之后的参数
+    // *arguments 参数
     var args = slice.call(arguments, 2);
 
     // 判断 method 是不是函数
@@ -578,16 +587,16 @@
   // Shuffle a collection, using the modern version of the
   // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
   // 将数组乱序
-  // 如果是对象，则返回一个数组，数组中的元素是对象 values 值集合
+  // 如果是对象，则返回一个数组，数组由对象 value 值构成
   // Fisher-Yates shuffle 算法
   // 最优的洗牌算法，复杂度 O(n)
   // 乱序不要用 sort + Math.random()，复杂度 O(nlogn)
   _.shuffle = function(obj) {
-    // 如果是对象，则对 values 值进行乱序
+    // 如果是对象，则对 value 值进行乱序
     var set = isArrayLike(obj) ? obj : _.values(obj);
     var length = set.length;
 
-    // 乱序后返回的数组副本（参数是对象则返回乱序后的 values 数组）
+    // 乱序后返回的数组副本（参数是对象则返回乱序后的 value 数组）
     var shuffled = Array(length);
 
     // 枚举元素
@@ -598,6 +607,7 @@
       if (rand !== index) shuffled[index] = shuffled[rand];
       shuffled[rand] = set[index];
     }
+    
     return shuffled;
   };
 
