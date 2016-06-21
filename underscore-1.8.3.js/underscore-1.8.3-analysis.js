@@ -2189,6 +2189,10 @@
   // Is the given value `NaN`? (NaN is the only number which does not equal itself).
   // 判断是否是 NaN
   // NaN 是唯一的一个 `自己不等于自己` 的 number 类型
+  // 这样写有 BUG
+  // _.isNaN(new Number(0)) => true
+  // 详见 https://github.com/hanzichi/underscore-analysis/issues/13
+  // 最新版本（edge 版）已经修复该 BUG
   _.isNaN = function(obj) {
     return _.isNumber(obj) && obj !== +obj;
   };
