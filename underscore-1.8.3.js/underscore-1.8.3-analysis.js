@@ -220,18 +220,18 @@
   // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
 
   // Math.pow(2, 53) - 1 是 JavaScript 中能精确表示的最大数字
-  // 
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
 
   // getLength 函数
   // 该函数传入一个参数，返回参数的 length 属性值
-  // 用来获取数组（类数组）长度
+  // 用来获取 array 以及 arrayLike 元素的 length 属性值
   var getLength = property('length');
 
-  // 判断是否是类数组（array-like）
+  // 判断是否是 arrayLike object
   // 类数组，即拥有 length 属性并且 length 属性值为 Number 类型的元素
-  // 包括数组、arguments、HTML Collection 以及 NodeList
-  // 特别要注意的是，还包括类似 {length: 10} 这样的对象！
+  // 包括数组、arguments、HTML Collection 以及 NodeList 等等
+  // 包括类似 {length: 10} 这样的对象
+  // 包括非空字符串
   var isArrayLike = function(collection) {
     // 返回参数 collection 的 length 属性值
     var length = getLength(collection);
