@@ -591,6 +591,7 @@
   // Fisher-Yates shuffle 算法
   // 最优的洗牌算法，复杂度 O(n)
   // 乱序不要用 sort + Math.random()，复杂度 O(nlogn)
+  // 而且，并不是真正的乱序
   _.shuffle = function(obj) {
     // 如果是对象，则对 value 值进行乱序
     var set = isArrayLike(obj) ? obj : _.values(obj);
@@ -602,7 +603,6 @@
     // 枚举元素
     for (var index = 0, rand; index < length; index++) {
       // 将当前所枚举位置的元素和 `index=rand` 位置的元素交换
-      // 保证 0-index 位置的元素已经乱序 
       rand = _.random(0, index);
       if (rand !== index) shuffled[index] = shuffled[rand];
       shuffled[rand] = set[index];
