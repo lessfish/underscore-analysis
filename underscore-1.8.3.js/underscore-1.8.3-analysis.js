@@ -252,11 +252,11 @@
   // 第一个参数为数组（包括类数组）或者对象
   // 第二个参数为迭代方法，对数组或者对象每个元素都执行该方法
   // 该方法又能传入三个参数，分别为 (item, index, array)（(value, key, obj) for object）
-  // 与 ES5 中 forEach 方法传参格式一致
+  // 与 ES5 中 Array.prototype.forEach 方法传参格式一致
   // 第三个参数（可省略）确定第二个参数 iteratee 函数中的（可能有的）this 指向
   // 即 iteratee 中出现的（如果有）所有 this 都指向 context
   // notice: 不要传入一个带有 key 类型为 number 的对象！
-  // notice: _.each 方法不能用 return 跳出循环
+  // notice: _.each 方法不能用 return 跳出循环（同样，Array.prototype.forEach 也不行）
   _.each = _.forEach = function(obj, iteratee, context) {
     // 根据 context 确定不同的迭代函数
     iteratee = optimizeCb(iteratee, context);
@@ -464,7 +464,8 @@
   // Determine if the array or object contains a given item (using `===`).
   // Aliased as `includes` and `include`.
   // 判断数组或者对象中（value 值）是否有指定元素
-  // 如果是 object，则忽略了 key 值，只需要查找 value 值即可
+  // 如果是 object，则忽略 key 值，只需要查找 value 值即可
+  // 即该 obj 中是否有指定的 value 值
   // 返回布尔值
   _.contains = _.includes = _.include = function(obj, item, fromIndex, guard) {
     // 如果是对象，返回 values 组成的数组
@@ -480,7 +481,6 @@
   };
 
   // Invoke a method (with arguments) on every item in a collection.
-  // _.invoke(list, methodName, *arguments)
   // Calls the method named by methodName on each value in the list.
   // Any extra arguments passed to invoke will be forwarded on to the method invocation.
   // 数组或者对象中的每个元素都调用 method 方法
@@ -549,6 +549,7 @@
       // 如果是数组，则寻找数组中最大元素
       // 如果是对象，则寻找最大 value 值
       obj = isArrayLike(obj) ? obj : _.values(obj);
+
       for (var i = 0, length = obj.length; i < length; i++) {
         value = obj[i];
         if (value > result) {
@@ -611,6 +612,7 @@
   // 最优的洗牌算法，复杂度 O(n)
   // 乱序不要用 sort + Math.random()，复杂度 O(nlogn)
   // 而且，并不是真正的乱序
+  // @see https://github.com/hanzichi/underscore-analysis/issues/15
   _.shuffle = function(obj) {
     // 如果是对象，则对 value 值进行乱序
     var set = isArrayLike(obj) ? obj : _.values(obj);
@@ -654,7 +656,7 @@
     iteratee = cb(iteratee, context);
 
     // 根据指定的 key 返回 values 数组
-    // _.pluck([{], {}, }], 'value')
+    // _.pluck([{}, {}, {}], 'value')
     return _.pluck(
       // _.map(obj, function(){}).sort()
       // _.map 后的结果 [{}, {}..]
@@ -679,14 +681,23 @@
   };
 
   // An internal function used for aggregate "group by" operations.
+  // behavior 是一个函数参数
+  // _.groupBy, _.indexBy 以及 _.countBy 其实都是对数组元素进行分类
+  // 分类规则就是 behavior 函数
   var group = function(behavior) {
     return function(obj, iteratee, context) {
+      // 返回结果是一个对象
       var result = {};
       iteratee = cb(iteratee, context);
+      // 遍历元素
       _.each(obj, function(value, index) {
+        // 经过迭代，获取结果值，存为 key
         var key = iteratee(value, index, obj);
+        // 按照不同的规则进行分组操作
+        // 将变量 result 当做参数传入，能在 behavior 中改变该值
         behavior(result, value, key);
       });
+      // 返回结果对象
       return result;
     };
   };
@@ -695,7 +706,15 @@
   // to group by, or a function that returns the criterion.
   // groupBy_  _.groupBy(list, iteratee, [context])
   // 根据特定规则对数组或者对象中的元素进行分组
+  // result 是返回对象
+  // value 是数组元素
+  // key 是迭代后的值
   _.groupBy = group(function(result, value, key) {
+    // 根据 key 值分组
+    // key 是元素经过迭代函数后的值
+    // 或者元素自身的属性值
+
+    // result 对象已经有该 key 值了
     if (_.has(result, key))
       result[key].push(value);
     else result[key] = [value];
@@ -704,6 +723,9 @@
   // Indexes the object's values by a criterion, similar to `groupBy`, but for
   // when you know that your index values will be unique.
   _.indexBy = group(function(result, value, key) {
+    // key 值必须是独一无二的
+    // 不然后面的会覆盖前面的
+    // 其他和 _.groupBy 类似
     result[key] = value;
   });
 
@@ -711,6 +733,7 @@
   // either a string attribute to count by, or a function that returns the
   // criterion.
   _.countBy = group(function(result, value, key) {
+    // 不同 key 值元素数量
     if (_.has(result, key))
       result[key]++;
     else result[key] = 1;
@@ -1323,7 +1346,7 @@
   // Create a function bound to a given object (assigning `this`, and arguments,
   // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
   // available.
-  // ES5 bind 方法的扩展
+  // ES5 bind 方法的扩展（polyfill）
   // 将 func 中的 this 指向 context
   _.bind = function(func, context) {
     // 如果支持 ES5 bind，则优先使用
@@ -1384,7 +1407,7 @@
   // it with the arguments supplied.
   // 延迟触发某方法
   _.delay = function(func, wait) {
-    // 获取 _delay 方法 index=2 后的参数
+    // 获取 _.delay 方法 index=2 后的参数
     // 是 func 函数所需要的参数
     var args = slice.call(arguments, 2);
     return setTimeout(function(){
@@ -1403,35 +1426,65 @@
   // but if you'd like to disable the execution on the leading edge, pass
   // `{leading: false}`. To disable execution on the trailing edge, ditto.
   // 函数节流
-  // 间隔时间触发
+  // 每 wait seconds 触发一次 func
+  // 如果 options 传入 {leading: false}
+  // 那么不会马上触发（wait seconds 后第一次触发 func）
+  // 如果 options 传入 {trailing: false}
+  // 那么最后一次 func 不会被触发
+  // var throttled = _.throttle(updatePosition, 100);
+  // $(window).scroll(throttled);
+  // _.throttle(function, wait, [options])
   _.throttle = function(func, wait, options) {
     var context, args, result;
     var timeout = null;
+    // 标记时间戳
     var previous = 0;
+
+    // 如果没有传入 options 参数
+    // 则置为空对象
     if (!options) options = {};
+
+    // 执行 later 方法
+    // 就是触发 func 方法
     var later = function() {
       previous = options.leading === false ? 0 : _.now();
       timeout = null;
       result = func.apply(context, args);
       if (!timeout) context = args = null;
     };
+
+    // 以滚轮事件为例（scroll）
+    // 每次滚轮事件即执行这个返回的方法
     return function() {
       var now = _.now();
-      if (!previous && options.leading === false) previous = now;
+      if (!previous && options.leading === false)
+        previous = now;
       var remaining = wait - (now - previous);
       context = this;
       args = arguments;
+
+      // 要么是到了间隔时间了，触发方法（remaining <= 0）
+      // 要么是没有传入 {leading: false}，即立即触发（remaining > wait）
       if (remaining <= 0 || remaining > wait) {
         if (timeout) {
           clearTimeout(timeout);
           timeout = null;
         }
+
+        // 重置时间戳
         previous = now;
+
+        // 触发方法
         result = func.apply(context, args);
-        if (!timeout) context = args = null;
-      } else if (!timeout && options.trailing !== false) {
+
+        // 引用置为空，防止内存泄露
+        if (!timeout)
+          context = args = null;
+      } else if (!timeout && options.trailing !== false) { // 最后一次需要触发
         timeout = setTimeout(later, remaining);
       }
+
+      // 这个方法不需要 return 吧？
       return result;
     };
   };
@@ -1448,12 +1501,20 @@
     var later = function() {
       var last = _.now() - timestamp;
 
+      // 还没到触发的点
+      // 则继续设置定时器
       if (last < wait && last >= 0) {
         timeout = setTimeout(later, wait - last);
       } else {
+        // 到了可以触发的时间点
         timeout = null;
+        // 可以触发了
+        // 并且不是设置为立即触发的
         if (!immediate) {
+          // 执行 func 函数
           result = func.apply(context, args);
+          // 这里的 timeout 一定是 null 了吧
+          // 感觉这个判断多余了
           if (!timeout) context = args = null;
         }
       }
@@ -1462,9 +1523,18 @@
     return function() {
       context = this;
       args = arguments;
+
+      // 每次触发函数，更新时间戳
       timestamp = _.now();
+
+      // 立即触发需要满足两个条件
+      // immediate 参数为 true，并且 timeout 还没设置
       var callNow = immediate && !timeout;
-      if (!timeout) timeout = setTimeout(later, wait);
+
+      if (!timeout)
+        timeout = setTimeout(later, wait);
+
+      // 如果是立即触发
       if (callNow) {
         result = func.apply(context, args);
         context = args = null;

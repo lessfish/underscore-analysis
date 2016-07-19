@@ -27,6 +27,7 @@
 - [你可能不知道的 NaN 以及 underscore 1.8.3 _.isNaN 的一个 BUG (2016-06-21)](https://github.com/hanzichi/underscore-analysis/issues/13)
 - [JavaScript 特殊对象 Array-Like Objects 详解 (2016-06-25)](https://github.com/hanzichi/underscore-analysis/issues/14)
 - [JavaScript 数组乱序 (2016-07-04)](https://github.com/hanzichi/underscore-analysis/issues/15)
+- [浅谈 underscore 内部方法 group 的设计原理 (2016-07-18)](https://github.com/hanzichi/underscore-analysis/issues/16)
 
 
 
