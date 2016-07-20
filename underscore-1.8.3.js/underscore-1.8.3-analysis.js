@@ -1336,10 +1336,19 @@
   // Determines whether to execute a function as a constructor
   // or a normal function with the provided arguments
   var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
-    if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
+    // 非 new 调用 _.bind 返回的方法
+    // 即 callingContext 不是 boundFunc 的一个实例
+    if (!(callingContext instanceof boundFunc))
+      return sourceFunc.apply(context, args);
+
+    // 如果是用 new 调用 _.bind 返回的方法
     var self = baseCreate(sourceFunc.prototype);
     var result = sourceFunc.apply(self, args);
+
+    // 如果是对象
     if (_.isObject(result)) return result;
+
+    // for _.partial ?
     return self;
   };
 
@@ -1347,51 +1356,82 @@
   // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
   // available.
   // ES5 bind 方法的扩展（polyfill）
-  // 将 func 中的 this 指向 context
+  // 将 func 中的 this 指向 context（对象）
+  // _.bind(function, object, *arguments)
+  // 可选的 arguments 参数会被当作 func 的参数传入
+  // func 在调用时，会优先用 arguments 参数，然后再用 func 方法自己的参数
   _.bind = function(func, context) {
-    // 如果支持 ES5 bind，则优先使用
-    if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
+    // 如果浏览器支持 ES5 bind 方法，则优先使用
+    if (nativeBind && func.bind === nativeBind)
+      return nativeBind.apply(func, slice.call(arguments, 1));
+
     // 如果 bind 不是对 func 使用，则抛出一个错误
-    if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
+    if (!_.isFunction(func))
+      throw new TypeError('Bind must be called on a function');
+
+    // polyfill
+    // 经典闭包，函数返回函数
+    // args 获取优先使用的参数
     var args = slice.call(arguments, 2);
     var bound = function() {
       return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
     };
+
     return bound;
   };
 
   // Partially apply a function by creating a version that has had some of its
   // arguments pre-filled, without changing its dynamic `this` context. _ acts
   // as a placeholder, allowing any combination of arguments to be pre-filled.
+  // _.partial(function, *arguments)
+  // _.partial 能返回一个方法
+  // pre-fill 该方法的一些参数
   _.partial = function(func) {
+    // 提取希望 pre-fill 的参数
+    // 如果传入的是 _，则这个位置的参数暂时空着，等待手动填入
     var boundArgs = slice.call(arguments, 1);
+
     var bound = function() {
       var position = 0, length = boundArgs.length;
       var args = Array(length);
       for (var i = 0; i < length; i++) {
+        // 如果该位置的参数为 _，则用 bound 方法的参数填充这个位置
+        // args 为调用 _.partial 方法的 pre-fill 的参数 & bound 方法的 arguments
         args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i];
       }
-      while (position < arguments.length) args.push(arguments[position++]);
+
+      // bound 方法还有剩余的 arguments，添上去
+      while (position < arguments.length)
+        args.push(arguments[position++]);
+
       return executeBound(func, bound, this, this, args);
     };
+
     return bound;
   };
 
   // Bind a number of an object's methods to that object. Remaining arguments
   // are the method names to be bound. Useful for ensuring that all callbacks
   // defined on an object belong to it.
-  // 将一些函数中的 this 指向 obj 变量
+  // 指定一系列方法（methodNames）中的 this 指向（object）
+  // _.bindAll(object, *methodNames)
   _.bindAll = function(obj) {
     var i, length = arguments.length, key;
+
+    // 如果只传入了一个参数（obj），没有传入 methodNames，则报错
     if (length <= 1) throw new Error('bindAll must be passed function names');
+
+    // 遍历 methodNames
     for (i = 1; i < length; i++) {
       key = arguments[i];
+      // 逐个绑定
       obj[key] = _.bind(obj[key], obj);
     }
     return obj;
   };
 
   // Memoize an expensive function by storing its results.
+  // 记忆化
   _.memoize = function(func, hasher) {
     var memoize = function(key) {
       var cache = memoize.cache;
@@ -1406,8 +1446,10 @@
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
   // 延迟触发某方法
+  // _.delay(function, wait, *arguments)
+  //  如果传入了 arguments 参数，则会被当作 function 的参数在触发时调用
   _.delay = function(func, wait) {
-    // 获取 _.delay 方法 index=2 后的参数
+    // 获取 *arguments
     // 是 func 函数所需要的参数
     var args = slice.call(arguments, 2);
     return setTimeout(function(){
@@ -1418,6 +1460,7 @@
 
   // Defers a function, scheduling it to run after the current call stack has
   // cleared.
+  // 和 setTimeout(func, 0) 相似
   _.defer = _.partial(_.delay, _, 1);
 
   // Returns a function, that, when invoked, will only be triggered at most once
@@ -1562,6 +1605,8 @@
 
   // Returns a function that is the composition of a list of functions, each
   // consuming the return value of the function that follows.
+  // _.compose(*functions)
+  // _compose(f, g, h) => f(g(h()))
   _.compose = function() {
     var args = arguments;
     var start = args.length - 1;
@@ -1587,7 +1632,8 @@
   };
 
   // Returns a function that will only be executed up to (but not including) the Nth call.
-  // 至多调用函数 N 次
+  // 至多调用函数 times 次
+  // 当第 times 次调用的时候，将 func 方法值返回
   _.before = function(times, func) {
     var memo;
     return function() {
@@ -1602,6 +1648,8 @@
   // Returns a function that will be executed at most one time, no matter how
   // often you call it. Useful for lazy initialization.
   // 函数至多只能被调用一次
+  // 适用于这样的场景，某些函数只能被初始化一次，不得不设置一个变量 flag
+  // 初始化后设置 flag 为 true，之后不断 check flag
   _.once = _.partial(_.before, 2);
 
 
