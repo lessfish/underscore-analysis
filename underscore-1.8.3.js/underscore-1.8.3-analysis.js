@@ -1337,18 +1337,33 @@
   // or a normal function with the provided arguments
   var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
     // 非 new 调用 _.bind 返回的方法
-    // 即 callingContext 不是 boundFunc 的一个实例
+    // callingContext 不是 boundFunc 的一个实例
     if (!(callingContext instanceof boundFunc))
       return sourceFunc.apply(context, args);
 
     // 如果是用 new 调用 _.bind 返回的方法
+
+    // self 为 sourceFunc 的实例，继承了它的原型链
+    // self 理论上是一个空对象（还没赋值），但是有原型链
     var self = baseCreate(sourceFunc.prototype);
+
+    // 用 new 生成一个构造函数的实例
+    // 正常情况下是没有返回值的，即 result 值为 undefined
+    // 如果构造函数有返回值
+    // 如果返回值是对象（非 null），则 new 的结果返回这个对象
+    // 否则返回实例
+    // @see http://www.cnblogs.com/zichi/p/4392944.html
     var result = sourceFunc.apply(self, args);
 
-    // 如果是对象
+    // 如果构造函数返回了对象
+    // 则 new 的结果是这个对象
+    // 返回这个对象
     if (_.isObject(result)) return result;
 
-    // for _.partial ?
+    // 否则返回 self
+    // var result = sourceFunc.apply(self, args);
+    // self 对象当做参数传入
+    // 会直接改变值
     return self;
   };
 
@@ -1359,13 +1374,14 @@
   // 将 func 中的 this 指向 context（对象）
   // _.bind(function, object, *arguments)
   // 可选的 arguments 参数会被当作 func 的参数传入
-  // func 在调用时，会优先用 arguments 参数，然后再用 func 方法自己的参数
+  // func 在调用时，会优先用 arguments 参数，然后使用 _.bind 返回方法所传入的参数
   _.bind = function(func, context) {
-    // 如果浏览器支持 ES5 bind 方法，则优先使用
+    // 如果浏览器支持 ES5 bind 方法，并且 func 上的 bind 方法没有被改写
+    // 则优先使用原生的 bind 方法
     if (nativeBind && func.bind === nativeBind)
       return nativeBind.apply(func, slice.call(arguments, 1));
 
-    // 如果 bind 不是对 func 使用，则抛出一个错误
+    // 如果传入的参数 func 不是方法，则抛出错误
     if (!_.isFunction(func))
       throw new TypeError('Bind must be called on a function');
 
@@ -1374,6 +1390,10 @@
     // args 获取优先使用的参数
     var args = slice.call(arguments, 2);
     var bound = function() {
+      // args.concat(slice.call(arguments))
+      // 最终函数的实际调用参数由两部分组成
+      // 一部分是传入 _.bind 的参数
+      // 另一部分是传入 bound（_.bind 所返回方法）的参数
       return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
     };
 
