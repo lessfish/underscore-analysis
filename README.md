@@ -1,6 +1,6 @@
 # underscore-1.8.3.js 源码解读
 
-### NOTICE
+### Notice
 
 - 如果您觉得该 Repo 让您有所收获，请点击右上角的 **Star** 支持楼主
 - 如果您想持续关注楼主的最新系列解读文章，请点击右上角的 **Watch** 订阅
@@ -32,7 +32,7 @@
 
 
 
-# Big Events 
+### Big Events
 
 - 2016-04-10 该 Repo 建立
 - 2016-05-16 『underscore-1.8.3.js 系列解读』第一篇 [『为什么用 void 0 代替 undefined』](https://github.com/hanzichi/underscore-analysis/issues/1) 发表
@@ -40,3 +40,4 @@
 - 2016-06-06 Star 200
 - 2016-06-13 Star 300
 - 2016-07-07 Star 400
+- 2016-08-18 Star 500
