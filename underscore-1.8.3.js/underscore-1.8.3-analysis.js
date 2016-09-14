@@ -1336,7 +1336,7 @@
   // Determines whether to execute a function as a constructor
   // or a normal function with the provided arguments
   var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
-    // 非 new 调用 _.bind 返回的方法
+    // 非 new 调用 _.bind 返回的方法（即 bound）
     // callingContext 不是 boundFunc 的一个实例
     if (!(callingContext instanceof boundFunc))
       return sourceFunc.apply(context, args);
@@ -1376,7 +1376,7 @@
   // 可选的 arguments 参数会被当作 func 的参数传入
   // func 在调用时，会优先用 arguments 参数，然后使用 _.bind 返回方法所传入的参数
   _.bind = function(func, context) {
-    // 如果浏览器支持 ES5 bind 方法，并且 func 上的 bind 方法没有被改写
+    // 如果浏览器支持 ES5 bind 方法，并且 func 上的 bind 方法没有被重写
     // 则优先使用原生的 bind 方法
     if (nativeBind && func.bind === nativeBind)
       return nativeBind.apply(func, slice.call(arguments, 1));
@@ -1392,7 +1392,7 @@
     var bound = function() {
       // args.concat(slice.call(arguments))
       // 最终函数的实际调用参数由两部分组成
-      // 一部分是传入 _.bind 的参数
+      // 一部分是传入 _.bind 的参数（会被优先调用）
       // 另一部分是传入 bound（_.bind 所返回方法）的参数
       return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
     };
@@ -1488,66 +1488,93 @@
   // as much as it can, without ever going more than once per `wait` duration;
   // but if you'd like to disable the execution on the leading edge, pass
   // `{leading: false}`. To disable execution on the trailing edge, ditto.
-  // 函数节流
-  // 每 wait seconds 触发一次 func
-  // 如果 options 传入 {leading: false}
-  // 那么不会马上触发（wait seconds 后第一次触发 func）
-  // 如果 options 传入 {trailing: false}
-  // 那么最后一次 func 不会被触发
+  // 函数节流（间隔一定时间段触发）
+  // 每 wait(Number) milliseconds 触发一次 func
+  // 如果 options 参数传入 {leading: false}
+  // 那么不会马上触发（wait milliseconds 后第一次触发 func）
+  // 如果 options 参数传入 {trailing: false}
+  // 那么最后一次回调不会被触发
+  // 示例：
   // var throttled = _.throttle(updatePosition, 100);
   // $(window).scroll(throttled);
+  // 调用方式：
   // _.throttle(function, wait, [options])
   _.throttle = function(func, wait, options) {
     var context, args, result;
+
+    // setTimeout 的 handler
     var timeout = null;
+
     // 标记时间戳
+    // 上一次执行回调的时间戳
     var previous = 0;
 
     // 如果没有传入 options 参数
-    // 则置为空对象
-    if (!options) options = {};
+    // 则将 options 参数置为空对象
+    if (!options)
+      options = {};
 
-    // 执行 later 方法
-    // 就是触发 func 方法
     var later = function() {
+      // 如果 options.leading 为 false
+      // 则每次触发回调后将 previous 置为 0
+      // 否则置为当前时间戳
       previous = options.leading === false ? 0 : _.now();
       timeout = null;
       result = func.apply(context, args);
-      if (!timeout) context = args = null;
+      if (!timeout)
+        context = args = null;
     };
 
     // 以滚轮事件为例（scroll）
     // 每次滚轮事件即执行这个返回的方法
+    // _.throttle 方法返回的函数
     return function() {
+      // 记录当前时间戳
       var now = _.now();
+
+      // 第一次执行回调（此时 previous 为 0，之后 previous 值为上一次时间戳）
+      // 并且程序设定第一个回调不是立即执行的
+      // 即 options.leading 设置为 false
+      // 则将上一次执行的时间戳 previous 设为 now
+      // 表示刚执行过，这次就不用执行了
       if (!previous && options.leading === false)
         previous = now;
+
+      // 距离下次触发 func 还需要等待的时间
       var remaining = wait - (now - previous);
       context = this;
       args = arguments;
 
       // 要么是到了间隔时间了，触发方法（remaining <= 0）
-      // 要么是没有传入 {leading: false}，即立即触发（remaining > wait）
+      // 要么是没有传入 {leading: false}，且第一次触发回调，即立即触发
+      // 此时 previous 为 0，wait - (now - previous) 也满足 <= 0
       if (remaining <= 0 || remaining > wait) {
         if (timeout) {
           clearTimeout(timeout);
+          // 解除引用，防止内存泄露
           timeout = null;
         }
 
-        // 重置时间戳
+        // 重置前一次触发的时间戳
         previous = now;
 
         // 触发方法
+        // result 为该方法返回值
+        // 只会在最开始的时候执行一次该方法
         result = func.apply(context, args);
 
         // 引用置为空，防止内存泄露
+        // 感觉这里的 timeout 肯定是 null 啊？这个 if 判断没必要吧？
         if (!timeout)
           context = args = null;
       } else if (!timeout && options.trailing !== false) { // 最后一次需要触发
+        // 如果已经存在一个定时器，则不会进入该 if 分支
+        // 如果 {trailing: false}，即最后一次不需要触发了
+        // 间隔 remaining milliseconds 后触发 later 方法
         timeout = setTimeout(later, remaining);
       }
 
-      // 这个方法不需要 return 吧？
+      // 回调可能有个 return 的值，可供程序后续处理
       return result;
     };
   };
@@ -1556,8 +1583,7 @@
   // be triggered. The function will be called after it stops being called for
   // N milliseconds. If `immediate` is passed, trigger the function on the
   // leading edge, instead of the trailing.
-  // 函数去抖
-  // 只触发一次
+  // 函数去抖（只触发一次）
   _.debounce = function(func, wait, immediate) {
     var timeout, args, context, timestamp, result;
 

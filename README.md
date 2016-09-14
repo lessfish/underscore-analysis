@@ -29,6 +29,7 @@
 - [JavaScript 数组乱序 (2016-07-04)](https://github.com/hanzichi/underscore-analysis/issues/15)
 - [浅谈 underscore 内部方法 group 的设计原理 (2016-07-18)](https://github.com/hanzichi/underscore-analysis/issues/16)
 - [关于 bind 你可能需要了解的知识点以及使用场景 (2016-08-17)](https://github.com/hanzichi/underscore-analysis/issues/18)
+- [bind 方法的兼容实现 (2016-09-05)](https://github.com/hanzichi/underscore-analysis/issues/19)
 
 
 
