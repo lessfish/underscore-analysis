@@ -1489,7 +1489,7 @@
   // but if you'd like to disable the execution on the leading edge, pass
   // `{leading: false}`. To disable execution on the trailing edge, ditto.
   // 函数节流（间隔一定时间段触发）
-  // 每 wait(Number) milliseconds 触发一次 func
+  // 每间隔 wait(Number) milliseconds 触发一次 func
   // 如果 options 参数传入 {leading: false}
   // 那么不会马上触发（wait milliseconds 后第一次触发 func）
   // 如果 options 参数传入 {trailing: false}
@@ -1499,6 +1499,15 @@
   // $(window).scroll(throttled);
   // 调用方式：
   // _.throttle(function, wait, [options])
+  // sample 1: _.throttle(function(){}, 1000)
+  // result: A, B, B, B ...
+  // sample 2: _.throttle(function(){}, 1000, {leading: false})
+  // result: B, B, B, B ...
+  // sample 3: _.throttle(function(){}, 1000, {trailing: false})
+  // result: A, A, A, A ...
+  // sample 4: _.throttle(function(){}, 1000, {leading: false, trailing: false})
+  // result: A, A, A, A ...
+  // 这个 case 有问题，第二次连续触发有问题
   _.throttle = function(func, wait, options) {
     var context, args, result;
 
@@ -1520,6 +1529,7 @@
       // 否则置为当前时间戳
       previous = options.leading === false ? 0 : _.now();
       timeout = null;
+      // console.log('B')
       result = func.apply(context, args);
       if (!timeout)
         context = args = null;
@@ -1533,8 +1543,8 @@
       var now = _.now();
 
       // 第一次执行回调（此时 previous 为 0，之后 previous 值为上一次时间戳）
-      // 并且程序设定第一个回调不是立即执行的
-      // 即 options.leading 设置为 false
+      // 并且如果程序设定第一个回调不是立即执行的
+      // 即 options.leading === false
       // 则将上一次执行的时间戳 previous 设为 now
       // 表示刚执行过，这次就不用执行了
       if (!previous && options.leading === false)
@@ -1548,6 +1558,9 @@
       // 要么是到了间隔时间了，触发方法（remaining <= 0）
       // 要么是没有传入 {leading: false}，且第一次触发回调，即立即触发
       // 此时 previous 为 0，wait - (now - previous) 也满足 <= 0
+      // ========= //
+      // 相当于一个双保险机制，要么执行该 if 分支的中的 `func.apply(context, args);` 语句
+      // 要么执行 `setTimeout(later, remaining)` 中的 later 方法
       if (remaining <= 0 || remaining > wait) {
         if (timeout) {
           clearTimeout(timeout);
@@ -1560,7 +1573,7 @@
 
         // 触发方法
         // result 为该方法返回值
-        // 只会在最开始的时候执行一次该方法
+        // console.log('A')
         result = func.apply(context, args);
 
         // 引用置为空，防止内存泄露
@@ -1584,6 +1597,10 @@
   // N milliseconds. If `immediate` is passed, trigger the function on the
   // leading edge, instead of the trailing.
   // 函数去抖（只触发一次）
+  // sample 1: _.debounce(function(){}, 1000)
+  // 连续事件结束后的 1000ms 后触发
+  // sample 1: _.debounce(function(){}, 1000, true)
+  // 连续事件触发后立即触发
   _.debounce = function(func, wait, immediate) {
     var timeout, args, context, timestamp, result;
 
@@ -1604,7 +1621,8 @@
           result = func.apply(context, args);
           // 这里的 timeout 一定是 null 了吧
           // 感觉这个判断多余了
-          if (!timeout) context = args = null;
+          if (!timeout)
+            context = args = null;
         }
       }
     };
