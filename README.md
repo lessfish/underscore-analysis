@@ -30,6 +30,7 @@
 - [浅谈 underscore 内部方法 group 的设计原理 (2016-07-18)](https://github.com/hanzichi/underscore-analysis/issues/16)
 - [关于 bind 你可能需要了解的知识点以及使用场景 (2016-08-17)](https://github.com/hanzichi/underscore-analysis/issues/18)
 - [bind 方法的兼容实现 (2016-09-05)](https://github.com/hanzichi/underscore-analysis/issues/19)
+- [JavaScript 函数节流和函数去抖应用场景辨析 (2016-10-06)](https://github.com/hanzichi/underscore-analysis/issues/20)
 
 
 
