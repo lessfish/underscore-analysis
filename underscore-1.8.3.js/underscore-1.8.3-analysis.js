@@ -1488,25 +1488,25 @@
   // as much as it can, without ever going more than once per `wait` duration;
   // but if you'd like to disable the execution on the leading edge, pass
   // `{leading: false}`. To disable execution on the trailing edge, ditto.
-  // 函数节流（每间隔一定时间段触发）
+  // 函数节流（如果有连续事件响应，则每间隔一定时间段触发）
   // 每间隔 wait(Number) milliseconds 触发一次 func 方法
   // 如果 options 参数传入 {leading: false}
-  // 那么不会马上触发（wait milliseconds 后第一次触发 func）
+  // 那么不会马上触发（等待 wait milliseconds 后第一次触发 func）
   // 如果 options 参数传入 {trailing: false}
   // 那么最后一次回调不会被触发
+  // **Notice: options 不能同时设置 leading 和 trailing 为 false**
   // 示例：
   // var throttled = _.throttle(updatePosition, 100);
   // $(window).scroll(throttled);
-  // 调用方式：
+  // 调用方式（注意看 A 和 B console.log 打印的位置）：
   // _.throttle(function, wait, [options])
   // sample 1: _.throttle(function(){}, 1000)
-  // result: A, B, B, B ...
+  // print: A, B, B, B ...
   // sample 2: _.throttle(function(){}, 1000, {leading: false})
-  // result: B, B, B, B ...
+  // print: B, B, B, B ...
   // sample 3: _.throttle(function(){}, 1000, {trailing: false})
-  // result: A, A, A, A ...
+  // print: A, A, A, A ...
   // ----------------------------------------- //
-  // Notice: options 不能同时设置 leading 和 trailing 为 false
   _.throttle = function(func, wait, options) {
     var context, args, result;
 
@@ -1530,6 +1530,9 @@
       timeout = null;
       // console.log('B')
       result = func.apply(context, args);
+
+      // 这里的 timeout 变量一定是 null 了吧
+      // 是否没有必要进行判断？
       if (!timeout)
         context = args = null;
     };
@@ -1542,9 +1545,8 @@
       var now = _.now();
 
       // 第一次执行回调（此时 previous 为 0，之后 previous 值为上一次时间戳）
-      // 并且如果程序设定第一个回调不是立即执行的
-      // 即 options.leading === false
-      // 则将上一次执行的时间戳 previous 设为 now（第一次触发时）
+      // 并且如果程序设定第一个回调不是立即执行的（options.leading === false）
+      // 则将 previous 值（表示上次执行的时间戳）设为 now 的时间戳（第一次触发时）
       // 表示刚执行过，这次就不用执行了
       if (!previous && options.leading === false)
         previous = now;
@@ -1554,12 +1556,16 @@
       context = this;
       args = arguments;
 
-      // 要么是到了间隔时间了，触发方法（remaining <= 0）
+      // 要么是到了间隔时间了，随即触发方法（remaining <= 0）
       // 要么是没有传入 {leading: false}，且第一次触发回调，即立即触发
       // 此时 previous 为 0，wait - (now - previous) 也满足 <= 0
+      // 之后便会把 previous 值迅速置为 now
       // ========= //
-      // 相当于一个双保险机制，要么执行该 if 分支的中的 `func.apply(context, args);` 语句
-      // 要么执行 `setTimeout(later, remaining)` 中的 later 方法
+      // remaining > wait，表示客户端系统时间被调整过
+      // 则马上执行 func 函数
+      // see @
+      // ========= //
+      // console.log(remaining) 可以打印出来看看
       if (remaining <= 0 || remaining > wait) {
         if (timeout) {
           clearTimeout(timeout);
@@ -1581,12 +1587,12 @@
           context = args = null;
       } else if (!timeout && options.trailing !== false) { // 最后一次需要触发
         // 如果已经存在一个定时器，则不会进入该 if 分支
-        // 如果 {trailing: false}，即最后一次不需要触发了
+        // 如果 {trailing: false}，即最后一次不需要触发了，也不会进入这个分支
         // 间隔 remaining milliseconds 后触发 later 方法
         timeout = setTimeout(later, remaining);
       }
 
-      // 回调可能有个 return 的值，可供程序后续处理
+      // 回调返回值
       return result;
     };
   };
@@ -1604,8 +1610,7 @@
     var timeout, args, context, timestamp, result;
 
     var later = function() {
-      // 定时器设置的回调 later 方法的触发时间
-      // 和连续事件触发的最后一次时间戳的间隔
+      // 定时器设置的回调 later 方法的触发时间，和连续事件触发的最后一次时间戳的间隔
       // 如果间隔为 wait（或者刚好大于 wait），则触发事件
       var last = _.now() - timestamp;
 
@@ -1620,8 +1625,8 @@
         // 可以触发了
         // 并且不是设置为立即触发的
         // 因为如果是立即触发（callNow），也会进入这个回调中
-        // 主要是为了将 timeout 置为空，使之不影响下次连续事件的触发
-        // 如果不是立即执行，即执行 func 方法
+        // 主要是为了将 timeout 值置为空，使之不影响下次连续事件的触发
+        // 如果不是立即执行，随即执行 func 方法
         if (!immediate) {
           // 执行 func 函数
           result = func.apply(context, args);
@@ -1633,28 +1638,29 @@
       }
     };
 
+    // 嗯，闭包返回的函数，是可以传入参数的
+    // 也是 DOM 事件所触发的回调函数
     return function() {
       // 可以指定 this 指向
-      // 用 bind？
       context = this;
       args = arguments;
 
       // 每次触发函数，更新时间戳
       // later 方法中取 last 值时用到该变量
       // 判断距离上次触发事件是否已经过了 wait seconds 了
-      // 即我们需要距离最后一次触发事件 wait seconds 后触发这个回调方法
+      // 即我们需要距离最后一次事件触发 wait seconds 后触发这个回调方法
       timestamp = _.now();
 
       // 立即触发需要满足两个条件
       // immediate 参数为 true，并且 timeout 还没设置
       // immediate 参数为 true 是显而易见的
       // 如果去掉 !timeout 的条件，就会一直触发，而不是触发一次
-      // 因为第一次触发后设置了 timeout，所以根据 timeout 是否为空可以判断是否是首次触发
+      // 因为第一次触发后已经设置了 timeout，所以根据 timeout 是否为空可以判断是否是首次触发
       var callNow = immediate && !timeout;
 
       // 设置 wait seconds 后触发 later 方法
-      // 无论是否 callNow（如果是 callNow，则去 later 方法中判断是否执行相应回调函数）
-      // 在某一段的连续触发中，只会在一开始进入这个 if 分支中
+      // 无论是否 callNow（如果是 callNow，也进入 later 方法，去 later 方法中判断是否执行相应回调函数）
+      // 在某一段的连续触发中，只会在第一次触发时进入这个 if 分支中
       if (!timeout)
         // 设置了 timeout，所以以后不会进入这个 if 分支了
         timeout = setTimeout(later, wait);
