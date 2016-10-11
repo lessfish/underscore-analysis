@@ -1538,7 +1538,7 @@
     };
 
     // 以滚轮事件为例（scroll）
-    // 每次滚轮事件即执行这个返回的方法
+    // 每次触发滚轮事件即执行这个返回的方法
     // _.throttle 方法返回的函数
     return function() {
       // 记录当前时间戳
@@ -1563,8 +1563,9 @@
       // ========= //
       // remaining > wait，表示客户端系统时间被调整过
       // 则马上执行 func 函数
-      // see @
+      // @see https://blog.coding.net/blog/the-difference-between-throttle-and-debounce-in-underscorejs
       // ========= //
+
       // console.log(remaining) 可以打印出来看看
       if (remaining <= 0 || remaining > wait) {
         if (timeout) {
@@ -1585,7 +1586,7 @@
         // 感觉这里的 timeout 肯定是 null 啊？这个 if 判断没必要吧？
         if (!timeout)
           context = args = null;
-      } else if (!timeout && options.trailing !== false) { // 最后一次需要触发
+      } else if (!timeout && options.trailing !== false) { // 最后一次需要触发的情况
         // 如果已经存在一个定时器，则不会进入该 if 分支
         // 如果 {trailing: false}，即最后一次不需要触发了，也不会进入这个分支
         // 间隔 remaining milliseconds 后触发 later 方法

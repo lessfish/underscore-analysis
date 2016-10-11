@@ -32,6 +32,7 @@
 - [bind 方法的兼容实现 (2016-09-05)](https://github.com/hanzichi/underscore-analysis/issues/19)
 - [JavaScript 函数节流和函数去抖应用场景辨析 (2016-10-06)](https://github.com/hanzichi/underscore-analysis/issues/20)
 - [underscore 函数去抖的实现 (2016-10-08)](https://github.com/hanzichi/underscore-analysis/issues/21)
+- [underscore 函数节流的实现 (2016-10-11)](https://github.com/hanzichi/underscore-analysis/issues/22)
 
 
 
