@@ -136,7 +136,6 @@
     return _.property(value);
   };
 
-
   _.iteratee = function(value, context) {
     return cb(value, context, Infinity);
   };
@@ -1228,7 +1227,6 @@
   // _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
   // _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
   function createIndexFinder(dir, predicateFind, sortedIndex) {
-
     // API 调用形式
     // _.indexOf(array, value, [isSorted])
     // _.indexOf(array, value, [fromIndex])
@@ -1766,7 +1764,6 @@
   // func 函数有个返回值，前 time - 1 次触发的返回值都是将参数代入重新计算的
   // 第 times 开始的返回值为第 times - 1 次时的返回值（不重新计算）
   // The result of the last function call is memoized and returned when count has been reached.
-  // 这个方法有什么卵用？想不明白 ...
   _.before = function(times, func) {
     var memo;
     return function() {

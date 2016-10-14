@@ -34,6 +34,7 @@
 - [underscore 函数去抖的实现 (2016-10-08)](https://github.com/hanzichi/underscore-analysis/issues/21)
 - [underscore 函数节流的实现 (2016-10-11)](https://github.com/hanzichi/underscore-analysis/issues/22)
 - [从斐波那契数列求值优化谈 _.memoize 方法 (2016-10-14)](https://github.com/hanzichi/underscore-analysis/issues/23)
+- [Function Functions 相关源码拾遗 (2016-10-14)](https://github.com/hanzichi/underscore-analysis/issues/24)
 
 
 
