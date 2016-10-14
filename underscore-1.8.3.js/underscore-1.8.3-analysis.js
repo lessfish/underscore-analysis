@@ -1451,15 +1451,41 @@
   };
 
   // Memoize an expensive function by storing its results.
-  // 记忆化
+  //「记忆化」，存储中间运算结果，提高效率
+  // 参数 hasher 是个 function，用来计算 key
+  // 如果传入了 hasher，则用 hasher 来计算 key
+  // 否则用 key 参数直接当 key（即 memoize 方法传入的第一个参数）
+  // _.memoize(function, [hashFunction])
+  // 适用于需要大量重复求值的场景
+  // 比如递归求解菲波那切数
+  // @http://www.jameskrob.com/memoize.html
+  // create hash for storing "expensive" function outputs
+  // run expensive function
+  // check whether function has already been run with given arguments via hash lookup
+  // if false - run function, and store output in hash
+  // if true, return output stored in hash
   _.memoize = function(func, hasher) {
     var memoize = function(key) {
+      // 储存变量，方便使用
       var cache = memoize.cache;
+
+      // 求 key
+      // 如果传入了 hasher，则用 hasher 函数来计算 key
+      // 否则用 参数 key（即 memoize 方法传入的第一个参数）当 key
       var address = '' + (hasher ? hasher.apply(this, arguments) : key);
-      if (!_.has(cache, address)) cache[address] = func.apply(this, arguments);
+
+      // 如果这个 key 还没被 hash 过（还没求过值）
+      if (!_.has(cache, address))
+        cache[address] = func.apply(this, arguments);
+
+      // 返回
       return cache[address];
     };
+
+    // cache 对象被当做 key-value 键值对缓存中间运算结果
     memoize.cache = {};
+
+    // 返回一个函数（经典闭包）
     return memoize;
   };
 
@@ -1467,7 +1493,8 @@
   // it with the arguments supplied.
   // 延迟触发某方法
   // _.delay(function, wait, *arguments)
-  //  如果传入了 arguments 参数，则会被当作 function 的参数在触发时调用
+  //  如果传入了 arguments 参数，则会被当作 func 的参数在触发时调用
+  // 其实是封装了「延迟触发某方法」，使其复用
   _.delay = function(func, wait) {
     // 获取 *arguments
     // 是 func 函数所需要的参数
@@ -1480,7 +1507,11 @@
 
   // Defers a function, scheduling it to run after the current call stack has
   // cleared.
-  // 和 setTimeout(func, 0) 相似
+  // 和 setTimeout(func, 0) 相似（源码看来似乎应该是 setTimeout(func, 1)）
+  // _.defer(function, *arguments)
+  // 如果传入 *arguments，会被当做参数，和 _.delay 调用方式类似（少了第二个参数）
+  // 其实核心还是调用了 _.delay 方法，但第二个参数（wait 参数）设置了默认值为 1
+  // 如何使得方法能设置默认值？用 _.partial 方法
   _.defer = _.partial(_.delay, _, 1);
 
   // Returns a function, that, when invoked, will only be triggered at most once
@@ -1687,7 +1718,7 @@
 
   // Returns a negated version of the passed-in predicate.
   // 返回一个 predicate 方法的对立方法
-  // 即该方法可以对原来的 predicate 迭代结果值取反
+  // 即该方法可以对原来的 predicate 迭代结果值取补集
   _.negate = function(predicate) {
     return function() {
       return !predicate.apply(this, arguments);
@@ -1697,25 +1728,32 @@
   // Returns a function that is the composition of a list of functions, each
   // consuming the return value of the function that follows.
   // _.compose(*functions)
-  // _compose(f, g, h) => f(g(h()))
+  // var tmp = _.compose(f, g, h)
+  // tmp(args) => f(g(h(args)))
   _.compose = function() {
-    var args = arguments;
-    var start = args.length - 1;
+    var args = arguments; // funcs
+    var start = args.length - 1; // 倒序调用
     return function() {
       var i = start;
       var result = args[start].apply(this, arguments);
-      while (i--) result = args[i].call(this, result);
+      // 一个一个方法地执行
+      while (i--)
+        result = args[i].call(this, result);
       return result;
     };
   };
 
   // Returns a function that will only be executed on and after the Nth call.
-  // 一个函数会在第 N 次被调用时执行
+  // 第 times 触发执行 func（事实上之后的每次触发还是会执行 func）
   // 有什么用呢？
-  // 如果有 N 个异步事件，所有异步执行完后执行该回调
-  // 思考 eventproxy
+  // 如果有 N 个异步事件，所有异步执行完后执行该回调，即 func 方法（联想 eventproxy）
+  // _.after 会返回一个函数
+  // 当这个函数第 times 被执行的时候
+  // 触发 func 方法
   _.after = function(times, func) {
     return function() {
+      // 函数被触发了 times 了，则执行 func 函数
+      // 事实上 times 次后如果函数继续被执行，也会触发 func
       if (--times < 1) {
         return func.apply(this, arguments);
       }
@@ -1723,15 +1761,26 @@
   };
 
   // Returns a function that will only be executed up to (but not including) the Nth call.
-  // 至多调用函数 times 次
-  // 当第 times 次调用的时候，将 func 方法值返回
+  // 函数至多被调用 times - 1 次（(but not including) the Nth call）
+  // func 函数会触发 time - 1 次（Creates a version of the function that can be called no more than count times）
+  // func 函数有个返回值，前 time - 1 次触发的返回值都是将参数代入重新计算的
+  // 第 times 开始的返回值为第 times - 1 次时的返回值（不重新计算）
+  // The result of the last function call is memoized and returned when count has been reached.
+  // 这个方法有什么卵用？想不明白 ...
   _.before = function(times, func) {
     var memo;
     return function() {
       if (--times > 0) {
+        // 缓存函数执行结果
         memo = func.apply(this, arguments);
       }
-      if (times <= 1) func = null;
+
+      // func 引用置为空，其实不置为空也用不到 func 了
+      if (times <= 1)
+        func = null;
+
+      // 前 times - 1 次触发，memo 都是分别计算返回
+      // 第 times 次开始，memo 值同 times - 1 次时的 memo
       return memo;
     };
   };
@@ -1741,6 +1790,8 @@
   // 函数至多只能被调用一次
   // 适用于这样的场景，某些函数只能被初始化一次，不得不设置一个变量 flag
   // 初始化后设置 flag 为 true，之后不断 check flag
+  // ====== //
+  // 其实是调用了 _.before 方法，并且将 times 参数设置为了默认值 2（也就是 func 至多能被调用 2 - 1 = 1 次）
   _.once = _.partial(_.before, 2);
 
 
@@ -2482,16 +2533,15 @@
   // 如果全局环境中已经使用了 `_` 变量
   // 可以用该方法返回其他变量
   // 继续使用 underscore 中的方法
-  // var us = _.noConflict();
-  // us.each(..);
+  // var underscore = _.noConflict();
+  // underscore.each(..);
   _.noConflict = function() {
     root._ = previousUnderscore;
     return this;
   };
 
   // Keep the identity function around for default iteratees.
-  // 返回传入的参数
-  // 看起来好像没什么卵用
+  // 返回传入的参数，看起来好像没什么卵用
   // 其实 _.identity 在 undescore 内大量作为迭代函数出现
   // 能简化很多迭代函数的书写
   _.identity = function(value) {
@@ -2537,7 +2587,8 @@
   _.times = function(n, iteratee, context) {
     var accum = Array(Math.max(0, n));
     iteratee = optimizeCb(iteratee, context, 1);
-    for (var i = 0; i < n; i++) accum[i] = iteratee(i);
+    for (var i = 0; i < n; i++)
+      accum[i] = iteratee(i);
     return accum;
   };
 
@@ -2552,8 +2603,8 @@
   };
 
   // A (possibly faster) way to get the current timestamp as an integer.
-  // 返回当前时间的 "时间戳"
-  // 其实并不是时间戳，时间戳还要除以 1000
+  // 返回当前时间的 "时间戳"（单位 ms）
+  // 其实并不是时间戳，时间戳还要除以 1000（单位 s）
   _.now = Date.now || function() {
     return new Date().getTime();
   };
@@ -2584,7 +2635,12 @@
       return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
     };
   };
+
+  // Escapes a string for insertion into HTML, replacing &, <, >, ", `, and ' characters.
   _.escape = createEscaper(escapeMap);
+
+  // The opposite of escape
+  // replaces &amp;, &lt;, &gt;, &quot;, &#96; and &#x27; with their unescaped counterparts
   _.unescape = createEscaper(unescapeMap);
 
   // If the value of the named `property` is a function then invoke it with the
@@ -2599,6 +2655,7 @@
 
   // Generate a unique integer id (unique within the entire client session).
   // Useful for temporary DOM ids.
+  // 生成客户端临时的 DOM ids
   var idCounter = 0;
   _.uniqueId = function(prefix) {
     var id = ++idCounter + '';
@@ -2639,7 +2696,7 @@
   // Underscore templating handles arbitrary delimiters, preserves whitespace,
   // and correctly escapes quotes within interpolated code.
   // NB: `oldSettings` only exists for backwards compatibility.
-  // 轻量级的模板解析函数
+  // 轻量级的模板解析引擎函数
   _.template = function(text, settings, oldSettings) {
     if (!settings && oldSettings) settings = oldSettings;
     settings = _.defaults({}, settings, _.templateSettings);
@@ -2751,7 +2808,8 @@
     _.prototype[name] = function() {
       var obj = this._wrapped;
       method.apply(obj, arguments);
-      if ((name === 'shift' || name === 'splice') && obj.length === 0) delete obj[0];
+      if ((name === 'shift' || name === 'splice') && obj.length === 0)
+        delete obj[0];
       return result(this, obj);
     };
   });
