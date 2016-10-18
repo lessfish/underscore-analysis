@@ -2616,6 +2616,8 @@
     "'": '&#x27;',
     '`': '&#x60;'
   };
+
+  // _.invert 方法将一个对象的键值对对调
   var unescapeMap = _.invert(escapeMap);
 
   // Functions for escaping and unescaping strings to/from HTML interpolation.
@@ -2623,9 +2625,16 @@
     var escaper = function(match) {
       return map[match];
     };
+
     // Regexes for identifying a key that needs to be escaped
+    // 正则替换
+    // 注意下 ?:
     var source = '(?:' + _.keys(map).join('|') + ')';
+
+    // 正则 pattern
     var testRegexp = RegExp(source);
+
+    // 全局替换
     var replaceRegexp = RegExp(source, 'g');
     return function(string) {
       string = string == null ? '' : '' + string;
@@ -2634,10 +2643,12 @@
   };
 
   // Escapes a string for insertion into HTML, replacing &, <, >, ", `, and ' characters.
+  // 编码
   _.escape = createEscaper(escapeMap);
 
   // The opposite of escape
   // replaces &amp;, &lt;, &gt;, &quot;, &#96; and &#x27; with their unescaped counterparts
+  // 解码
   _.unescape = createEscaper(unescapeMap);
 
   // If the value of the named `property` is a function then invoke it with the
@@ -2661,7 +2672,9 @@
 
   // By default, Underscore uses ERB-style template delimiters, change the
   // following template settings to use alternative delimiters.
+  // ERB => Embedded Ruby
   _.templateSettings = {
+    // 三种渲染模板
     evaluate    : /<%([\s\S]+?)%>/g,
     interpolate : /<%=([\s\S]+?)%>/g,
     escape      : /<%-([\s\S]+?)%>/g
@@ -2693,58 +2706,111 @@
   // Underscore templating handles arbitrary delimiters, preserves whitespace,
   // and correctly escapes quotes within interpolated code.
   // NB: `oldSettings` only exists for backwards compatibility.
-  // 轻量级的模板解析引擎函数
+  // oldSettings 参数为了兼容 underscore 旧版本
+  // setting 参数可以用来自定义字符串模板
+  // 1. <%  %> - to execute some code
+  // 2. <%= %> - to print some value in template
+  // 3. <%- %> - to print some values HTML escaped
   _.template = function(text, settings, oldSettings) {
-    if (!settings && oldSettings) settings = oldSettings;
+    // settings 参数用来自定义字符串模板
+    // oldSettings 参数用来兼容 underscore 旧版本
+
+    // 兼容旧版本
+    if (!settings && oldSettings)
+      settings = oldSettings;
+
+    // 相同的 key，优先选择 settings 变量中的
+    // 其次选择 _.templateSettings 对象中的
+    // 生成最终用来做模板渲染的字符串
+    // 自定义模板优先于默认模板 _.templateSettings
+    // 如果定义了相同的 key，则前者会覆盖后者
     settings = _.defaults({}, settings, _.templateSettings);
 
     // Combine delimiters into one regular expression via alternation.
+    // 正则表达式 pattern，用于正则匹配 text 字符串中的模板字符串
     var matcher = RegExp([
+      // 注意下 pattern 的 source 属性
       (settings.escape || noMatch).source,
       (settings.interpolate || noMatch).source,
       (settings.evaluate || noMatch).source
     ].join('|') + '|$', 'g');
 
     // Compile the template source, escaping string literals appropriately.
+    // 编译模板字符串，将原始的模板字符串替换成函数字符串
+    // 用拼接成的函数字符串生成函数
     var index = 0;
+
+    // source 变量是 JavaScript 语句字符串
+    // 用于当做 new Function 生成函数时的函数字符串变量
+    // 记录编译成的函数字符串，可通过 _.template(tpl).source 获取（_.template(tpl) 返回方法）
     var source = "__p+='";
+
+    // replace 函数不需要为返回值赋值，主要是为了函数内 source 变量的赋值
+    // 将 text 变量中的模板提取出来
+    // match 为匹配的整个串
+    // escape/interpolate/evaluate 为匹配的子表达式（如果没有匹配成功则为 undefined）
+    // offset 为字符匹配的位置（偏移量）
     text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
+      // 正则替换，原来转义的放入字符串，就不需要转义了
       source += text.slice(index, offset).replace(escaper, escapeChar);
+
+      // 重新赋值偏移量，为了下次的 replace
       index = offset + match.length;
 
       if (escape) {
+        // 需要对变量进行编码（=> HTML 实体编码）
         source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
       } else if (interpolate) {
+        // 单纯的插入变量
         source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
       } else if (evaluate) {
+        // 可以直接执行的 JavaScript 语句
+        // 注意 "__p+="，__p 为渲染返回的字符串
         source += "';\n" + evaluate + "\n__p+='";
       }
 
-      // Adobe VMs need the match returned to produce the correct offest.
+      // Adobe VMs need the match returned to produce the correct offset.
+      // return 的作用是？
+      // 将匹配到的内容原样返回（Adobe VMs 需要返回 match 来使得 offset 值正常）
       return match;
     });
+
     source += "';\n";
 
     // If a variable is not specified, place data values in local scope.
-    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
+    // 指定 scope
+    // 如果设置了 settings.variable，能显著提升模板的渲染速度
+    if (!settings.variable)
+      source = 'with(obj||{}){\n' + source + '}\n';
 
+    // 增加 print 功能
+    // __p 为返回的字符串
     source = "var __t,__p='',__j=Array.prototype.join," +
       "print=function(){__p+=__j.call(arguments,'');};\n" +
       source + 'return __p;\n';
 
     try {
+      // render 方法，前两个参数为 render 方法的参数
       var render = new Function(settings.variable || 'obj', '_', source);
     } catch (e) {
+      // 抛出错误，用来 debug
       e.source = source;
       throw e;
     }
 
+    // 返回的函数
+    // data 一般是 JSON 数据，用来渲染模板
     var template = function(data) {
+      // render 为模板渲染函数
+      // 参数 _ 有什么卵用？使得模板里能用 underscore 的方法
+      // 主要是这种形式（<%  %> - to execute some code）
       return render.call(this, data, _);
     };
 
     // Provide the compiled source as a convenience for precompilation.
+    // template.source for debug?
     var argument = settings.variable || 'obj';
+    // 可通过 _.template(tpl).source 获取
     template.source = 'function(' + argument + '){\n' + source + '}';
 
     return template;
