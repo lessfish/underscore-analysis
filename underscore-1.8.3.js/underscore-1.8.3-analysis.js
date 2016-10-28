@@ -24,7 +24,7 @@
 
   // Save bytes in the minified (but not gzipped) version:
   // 缓存变量, 便于压缩代码
-  // 此 `压缩` 为压缩到 min.js 版本
+  // 此处「压缩」指的是压缩到 min.js 版本
   // 而不是 gzip 压缩
   var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
 
@@ -54,16 +54,23 @@
   // `_` 其实是一个构造函数
   // 支持无 new 调用的构造函数（思考 jQuery 的无 new 调用）
   // 将传入的参数（实际要操作的数据）赋值给 this._wrapped 属性
+  // OOP 调用时，_ 相当于一个构造函数
+  // each 等方法都在该构造函数的原型链上
+  // _([1, 2, 3]).each(alert)
+  // _([1, 2, 3]) 相当于无 new 构造了一个新的对象
+  // 调用了该对象的 each 方法，该方法在该对象构造函数的原型链上
   var _ = function(obj) {
     // 以下均针对 OOP 形式的调用
     // 如果是非 OOP 形式的调用，不会进入该函数内部
 
     // 如果 obj 已经是 `_` 函数的实例，则直接返回 obj
-    if (obj instanceof _) return obj;
+    if (obj instanceof _)
+      return obj;
 
     // 如果不是 `_` 函数的实例
     // 则调用 new 运算符，返回实例化的对象
-    if (!(this instanceof _)) return new _(obj);
+    if (!(this instanceof _))
+      return new _(obj);
 
     // 将 obj 赋值给 this._wrapped 属性
     this._wrapped = obj;
@@ -281,6 +288,7 @@
 
     // 返回 obj 参数
     // 供链式调用（Returns the list for chaining）
+    // 应该仅 OOP 调用有效
     return obj;
   };
 
@@ -2520,6 +2528,7 @@
     return obj != null && hasOwnProperty.call(obj, key);
   };
 
+
   // Utility Functions
   // 工具类方法
   // 共 14 个扩展方法
@@ -2608,16 +2617,25 @@
 
   // List of HTML entities for escaping.
   // HTML 实体编码
+  // escapeMap 用于编码
+  // see @http://www.cnblogs.com/zichi/p/5135636.html
+  // in PHP, htmlspecialchars — Convert special characters to HTML entities
+  // see @http://php.net/manual/zh/function.htmlspecialchars.php
+  // 能将 & " ' < > 转为实体编码（下面的前 5 种）
   var escapeMap = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
+    // 以上四个为最常用的字符实体
+    // 也是仅有的可以在所有环境下使用的实体字符（其他应该用「实体数字」，如下）
+    // 浏览器也许并不支持所有实体名称（对实体数字的支持却很好）
     "'": '&#x27;',
     '`': '&#x60;'
   };
 
   // _.invert 方法将一个对象的键值对对调
+  // unescapeMap 用于解码
   var unescapeMap = _.invert(escapeMap);
 
   // Functions for escaping and unescaping strings to/from HTML interpolation.
@@ -2643,7 +2661,7 @@
   };
 
   // Escapes a string for insertion into HTML, replacing &, <, >, ", `, and ' characters.
-  // 编码
+  // 编码，防止被 XSS 攻击
   _.escape = createEscaper(escapeMap);
 
   // The opposite of escape
@@ -2673,6 +2691,10 @@
   // By default, Underscore uses ERB-style template delimiters, change the
   // following template settings to use alternative delimiters.
   // ERB => Embedded Ruby
+  // Underscore 默认采用 ERB-style 风格模板，也可以根据自己习惯自定义模板
+  // 1. <%  %> - to execute some code
+  // 2. <%= %> - to print some value in template
+  // 3. <%- %> - to print some values HTML escaped
   _.templateSettings = {
     // 三种渲染模板
     evaluate    : /<%([\s\S]+?)%>/g,
@@ -2690,15 +2712,25 @@
   var escapes = {
     "'":      "'",
     '\\':     '\\',
-    '\r':     'r',
-    '\n':     'n',
-    '\u2028': 'u2028',
-    '\u2029': 'u2029'
+    '\r':     'r',  // 回车符
+    '\n':     'n',  // 换行符
+    // http://stackoverflow.com/questions/16686687/json-stringify-and-u2028-u2029-check
+    '\u2028': 'u2028', // Line separator
+    '\u2029': 'u2029'  // Paragraph separator
   };
 
+  // RegExp pattern
   var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
 
   var escapeChar = function(match) {
+    /**
+      '      => \\'
+      \\     => \\\\
+      \r     => \\r
+      \n     => \\n
+      \u2028 => \\u2028
+      \u2029 => \\u2029
+    **/
     return '\\' + escapes[match];
   };
 
@@ -2707,19 +2739,18 @@
   // and correctly escapes quotes within interpolated code.
   // NB: `oldSettings` only exists for backwards compatibility.
   // oldSettings 参数为了兼容 underscore 旧版本
-  // setting 参数可以用来自定义字符串模板
+  // setting 参数可以用来自定义字符串模板（但是 key 要和 _.templateSettings 中的相同，才能 overridden）
   // 1. <%  %> - to execute some code
   // 2. <%= %> - to print some value in template
   // 3. <%- %> - to print some values HTML escaped
+  // Compiles JavaScript templates into functions
+  // _.template(templateString, [settings])
   _.template = function(text, settings, oldSettings) {
-    // settings 参数用来自定义字符串模板
-    // oldSettings 参数用来兼容 underscore 旧版本
-
     // 兼容旧版本
     if (!settings && oldSettings)
       settings = oldSettings;
 
-    // 相同的 key，优先选择 settings 变量中的
+    // 相同的 key，优先选择 settings 对象中的
     // 其次选择 _.templateSettings 对象中的
     // 生成最终用来做模板渲染的字符串
     // 自定义模板优先于默认模板 _.templateSettings
@@ -2728,6 +2759,8 @@
 
     // Combine delimiters into one regular expression via alternation.
     // 正则表达式 pattern，用于正则匹配 text 字符串中的模板字符串
+    // /<%-([\s\S]+?)%>|<%=([\s\S]+?)%>|<%([\s\S]+?)%>|$/g
+    // 注意还有个 |$
     var matcher = RegExp([
       // 注意下 pattern 的 source 属性
       (settings.escape || noMatch).source,
@@ -2737,28 +2770,29 @@
 
     // Compile the template source, escaping string literals appropriately.
     // 编译模板字符串，将原始的模板字符串替换成函数字符串
-    // 用拼接成的函数字符串生成函数
+    // 用拼接成的函数字符串生成函数（new Function(...)）
     var index = 0;
 
-    // source 变量是 JavaScript 语句字符串
+    // source 变量拼接的字符串用来生成函数
     // 用于当做 new Function 生成函数时的函数字符串变量
     // 记录编译成的函数字符串，可通过 _.template(tpl).source 获取（_.template(tpl) 返回方法）
     var source = "__p+='";
 
-    // replace 函数不需要为返回值赋值，主要是为了函数内 source 变量的赋值
+    // replace 函数不需要为返回值赋值，主要是为了在函数内对 source 变量赋值
     // 将 text 变量中的模板提取出来
     // match 为匹配的整个串
     // escape/interpolate/evaluate 为匹配的子表达式（如果没有匹配成功则为 undefined）
-    // offset 为字符匹配的位置（偏移量）
+    // offset 为字符匹配（match）的起始位置（偏移量）
     text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
-      // 正则替换，原来转义的放入字符串，就不需要转义了
+      // \n => \\n
       source += text.slice(index, offset).replace(escaper, escapeChar);
 
-      // 重新赋值偏移量，为了下次的 replace
+      // 改变 index 值，为了下次的 slice
       index = offset + match.length;
 
       if (escape) {
         // 需要对变量进行编码（=> HTML 实体编码）
+        // 避免 XSS 攻击
         source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
       } else if (interpolate) {
         // 单纯的插入变量
@@ -2777,9 +2811,13 @@
 
     source += "';\n";
 
+    // By default, `template` places the values from your data in the local scope via the `with` statement.
+    // However, you can specify a single variable name with the variable setting.
+    // This can significantly improve the speed at which a template is able to render.
     // If a variable is not specified, place data values in local scope.
     // 指定 scope
     // 如果设置了 settings.variable，能显著提升模板的渲染速度
+    // 否则，默认用 with 语句指定作用域
     if (!settings.variable)
       source = 'with(obj||{}){\n' + source + '}\n';
 
@@ -2791,9 +2829,10 @@
 
     try {
       // render 方法，前两个参数为 render 方法的参数
+      // obj 为传入的 JSON 对象，_ 使得函数内部能用 Underscore 的函数
       var render = new Function(settings.variable || 'obj', '_', source);
     } catch (e) {
-      // 抛出错误，用来 debug
+      // 抛出错误
       e.source = source;
       throw e;
     }
@@ -2802,15 +2841,26 @@
     // data 一般是 JSON 数据，用来渲染模板
     var template = function(data) {
       // render 为模板渲染函数
-      // 参数 _ 有什么卵用？使得模板里能用 underscore 的方法
-      // 主要是这种形式（<%  %> - to execute some code）
+      // 传入参数 _ ，使得模板里 <%  %> 里的代码能用 underscore 的方法
+      //（<%  %> - to execute some code）
       return render.call(this, data, _);
     };
 
     // Provide the compiled source as a convenience for precompilation.
     // template.source for debug?
+    // obj 与 with(obj||{}) 中的 obj 对应
     var argument = settings.variable || 'obj';
+
     // 可通过 _.template(tpl).source 获取
+    // 可以用来预编译，在服务端预编译好，直接在客户端生成代码，客户端直接调用方法
+    // 这样如果出错就能打印出错行
+    // Precompiling your templates can be a big help when debugging errors you can't reproduce.
+    // This is because precompiled templates can provide line numbers and a stack trace,
+    // something that is not possible when compiling templates on the client.
+    // The source property is available on the compiled template function for easy precompilation.
+    // see @http://stackoverflow.com/questions/18755292/underscore-js-precompiled-templates-using
+    // see @http://stackoverflow.com/questions/13536262/what-is-javascript-template-precompiling
+    // see @http://stackoverflow.com/questions/40126223/can-anyone-explain-underscores-precompilation-in-template
     template.source = 'function(' + argument + '){\n' + source + '}';
 
     return template;
@@ -2818,9 +2868,30 @@
 
   // Add a "chain" function. Start chaining a wrapped Underscore object.
   // 使支持链式调用
+  /**
+  // 非 OOP 调用 chain
+  _.chain([1, 2, 3])
+    .map(function(a) { return a * 2; })
+    .reverse().value(); // [6, 4, 2]
+
+  // OOP 调用 chain
+  _([1, 2, 3])
+    .chain()
+    .map(function(a){ return a * 2; })
+    .first()
+    .value(); // 2
+  **/
   _.chain = function(obj) {
+    // 无论是否 OOP 调用，都会转为 OOP 形式
+    // 并且给新的构造对象添加了一个 _chain 属性
     var instance = _(obj);
+
+    // 标记是否使用链式操作
     instance._chain = true;
+
+    // 返回 OOP 对象
+    // 可以看到该 instance 对象除了多了个 _chain 属性
+    // 其他的和直接 _(obj) 的结果一样
     return instance;
   };
 
@@ -2836,23 +2907,38 @@
   // 并且支持链式调用
 
   // Helper function to continue chaining intermediate results.
+  // 一个帮助方法（Helper function）
   var result = function(instance, obj) {
+    // 如果需要链式操作，则对 obj 运行 _.chain 方法，使得可以继续后续的链式操作
+    // 如果不需要，直接返回 obj
     return instance._chain ? _(obj).chain() : obj;
   };
 
   // Add your own custom functions to the Underscore object.
-
-  // 可向 underscore 类库扩展自己的方法
-  // obj 参数必须是一个对象
+  // 可向 underscore 函数库扩展自己的方法
+  // obj 参数必须是一个对象（JavaScript 中一切皆对象）
   // 且自己的方法定义在 obj 的属性上
   // 如 obj.myFunc = function() {...}
+  // 形如 {myFunc: function(){}}
   // 之后便可使用如下: _.myFunc(..) 或者 OOP _(..).myFunc(..)
   _.mixin = function(obj) {
+    // 遍历 obj 的 key，将方法挂载到 Underscore 上
+    // 其实是将方法浅拷贝到 _.prototype 上
     _.each(_.functions(obj), function(name) {
+      // 直接把方法挂载到 _[name] 上
+      // 调用类似 _.myFunc([1, 2, 3], ..)
       var func = _[name] = obj[name];
+
+      // 浅拷贝
+      // 将 name 方法挂载到 _ 对象的原型链上，OOP 调用
       _.prototype[name] = function() {
+        // 第一个参数
         var args = [this._wrapped];
+
+        // arguments 为 name 方法需要的其他参数
         push.apply(args, arguments);
+        // 执行 func 方法
+        // 支持链式操作
         return result(this, func.apply(_, args));
       };
     });
@@ -2871,14 +2957,17 @@
     _.prototype[name] = function() {
       var obj = this._wrapped;
       method.apply(obj, arguments);
+
       if ((name === 'shift' || name === 'splice') && obj.length === 0)
         delete obj[0];
+
+      // 支持链式操作
       return result(this, obj);
     };
   });
 
   // Add all accessor Array functions to the wrapper.
-  // 添加 concat、join、slice 方法
+  // 添加 concat、join、slice 等数组原生方法给 Underscore
   _.each(['concat', 'join', 'slice'], function(name) {
     var method = ArrayProto[name];
     _.prototype[name] = function() {
@@ -2889,6 +2978,7 @@
   // Extracts the result from a wrapped and chained object.
   // 一个包装过(OOP)并且链式调用的对象
   // 用 value 方法获取结果
+  // _(obj).value === obj?
   _.prototype.value = function() {
     return this._wrapped;
   };
@@ -2901,6 +2991,13 @@
     return '' + this._wrapped;
   };
 
+  // AMD registration happens at the end for compatibility with AMD loaders
+  // that may not enforce next-turn semantics on modules. Even though general
+  // practice for AMD registration is to be anonymous, underscore registers
+  // as a named module because, like jQuery, it is a base library that is
+  // popular enough to be bundled in a third party lib, but not be part of
+  // an AMD load request. Those cases could generate an error when an
+  // anonymous define() is called outside of a loader request.
   // 兼容 AMD 规范
   if (typeof define === 'function' && define.amd) {
     define('underscore', [], function() {
