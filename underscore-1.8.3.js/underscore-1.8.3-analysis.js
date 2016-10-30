@@ -2514,7 +2514,7 @@
   // undefined 能被改写 （IE < 9）
   // undefined 只是全局对象的一个属性
   // 在局部环境能被重新定义
-  // 但是 void 0 始终是 undefined
+  // 但是「void 0」始终是 undefined
   _.isUndefined = function(obj) {
     return obj === void 0;
   };
@@ -2564,11 +2564,13 @@
   _.noop = function(){};
 
   // 传送门
-  // var property = function(key) {
-  //   return function(obj) {
-  //     return obj == null ? void 0 : obj[key];
-  //   };
-  // };
+  /*
+  var property = function(key) {
+    return function(obj) {
+      return obj == null ? void 0 : obj[key];
+    };
+  };
+  */
   _.property = property;
 
   // Generates a function for a given object that returns a given property.
@@ -2611,6 +2613,7 @@
   // A (possibly faster) way to get the current timestamp as an integer.
   // 返回当前时间的 "时间戳"（单位 ms）
   // 其实并不是时间戳，时间戳还要除以 1000（单位 s）
+  // +new Date 类似
   _.now = Date.now || function() {
     return new Date().getTime();
   };
@@ -2661,7 +2664,7 @@
   };
 
   // Escapes a string for insertion into HTML, replacing &, <, >, ", `, and ' characters.
-  // 编码，防止被 XSS 攻击
+  // 编码，防止被 XSS 攻击等一些安全隐患
   _.escape = createEscaper(escapeMap);
 
   // The opposite of escape
@@ -2734,6 +2737,7 @@
     return '\\' + escapes[match];
   };
 
+  // 将 JavaScript 模板编译为可以用于页面呈现的函数
   // JavaScript micro-templating, similar to John Resig's implementation.
   // Underscore templating handles arbitrary delimiters, preserves whitespace,
   // and correctly escapes quotes within interpolated code.
@@ -2760,7 +2764,7 @@
     // Combine delimiters into one regular expression via alternation.
     // 正则表达式 pattern，用于正则匹配 text 字符串中的模板字符串
     // /<%-([\s\S]+?)%>|<%=([\s\S]+?)%>|<%([\s\S]+?)%>|$/g
-    // 注意还有个 |$
+    // 注意最后还有个 |$
     var matcher = RegExp([
       // 注意下 pattern 的 source 属性
       (settings.escape || noMatch).source,
@@ -2829,7 +2833,7 @@
 
     try {
       // render 方法，前两个参数为 render 方法的参数
-      // obj 为传入的 JSON 对象，_ 使得函数内部能用 Underscore 的函数
+      // obj 为传入的 JSON 对象，传入 _ 参数使得函数内部能用 Underscore 的函数
       var render = new Function(settings.variable || 'obj', '_', source);
     } catch (e) {
       // 抛出错误

@@ -35,6 +35,7 @@
 - [underscore 函数节流的实现 (2016-10-11)](https://github.com/hanzichi/underscore-analysis/issues/22)
 - [从斐波那契数列求值优化谈 _.memoize 方法 (2016-10-14)](https://github.com/hanzichi/underscore-analysis/issues/23)
 - [Function Functions 相关源码拾遗 (2016-10-14)](https://github.com/hanzichi/underscore-analysis/issues/24)
+- [浅谈 Web 中前后端模板引擎的使用 (2016-10-30)](https://github.com/hanzichi/underscore-analysis/issues/25)
 
 
 
