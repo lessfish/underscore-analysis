@@ -36,6 +36,7 @@
 - [从斐波那契数列求值优化谈 _.memoize 方法 (2016-10-14)](https://github.com/hanzichi/underscore-analysis/issues/23)
 - [Function Functions 相关源码拾遗 (2016-10-14)](https://github.com/hanzichi/underscore-analysis/issues/24)
 - [浅谈 Web 中前后端模板引擎的使用 (2016-10-30)](https://github.com/hanzichi/underscore-analysis/issues/25)
+- [Underscore _.template 方法使用详解 (2016-10-31)](https://github.com/hanzichi/underscore-analysis/issues/26)
 
 
 

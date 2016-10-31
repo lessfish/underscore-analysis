@@ -2865,6 +2865,9 @@
     // see @http://stackoverflow.com/questions/18755292/underscore-js-precompiled-templates-using
     // see @http://stackoverflow.com/questions/13536262/what-is-javascript-template-precompiling
     // see @http://stackoverflow.com/questions/40126223/can-anyone-explain-underscores-precompilation-in-template
+    // JST is a server-side thing, not client-side.
+    // This mean that you compile Unserscore template on server side by some server-side script and save the result in a file.
+    // Then use this file as compiled Unserscore template.
     template.source = 'function(' + argument + '){\n' + source + '}';
 
     return template;
