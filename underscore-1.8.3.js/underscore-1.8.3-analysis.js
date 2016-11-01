@@ -1074,13 +1074,15 @@
 
       // 判断其他参数数组中是否都有 item 这个元素
       for (var j = 1; j < argsLength; j++) {
-        if (!_.contains(arguments[j], item)) break;
+        if (!_.contains(arguments[j], item))
+          break;
       }
 
       // 遍历其他参数数组完毕
       // j === argsLength 说明其他参数数组中都有 item 元素
       // 则将其放入 result[] 中
-      if (j === argsLength) result.push(item);
+      if (j === argsLength)
+        result.push(item);
     }
 
     return result;
@@ -1445,7 +1447,8 @@
     var i, length = arguments.length, key;
 
     // 如果只传入了一个参数（obj），没有传入 methodNames，则报错
-    if (length <= 1) throw new Error('bindAll must be passed function names');
+    if (length <= 1)
+      throw new Error('bindAll must be passed function names');
 
     // 遍历 methodNames
     for (i = 1; i < length; i++) {
@@ -2147,7 +2150,8 @@
     // 容错，如果不是对象或者数组类型，则可以直接返回
     // 因为一些基础类型是直接按值传递的
     // 思考，arguments 呢？ Nodelists 呢？ HTML Collections 呢？
-    if (!_.isObject(obj)) return obj;
+    if (!_.isObject(obj))
+      return obj;
 
     // 如果是数组，则用 obj.slice() 返回数组副本
     // 如果是对象，则提取所有 obj 的键值对覆盖空对象，返回
@@ -2937,7 +2941,7 @@
       var func = _[name] = obj[name];
 
       // 浅拷贝
-      // 将 name 方法挂载到 _ 对象的原型链上，OOP 调用
+      // 将 name 方法挂载到 _ 对象的原型链上，使之能 OOP 调用
       _.prototype[name] = function() {
         // 第一个参数
         var args = [this._wrapped];

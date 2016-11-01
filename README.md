@@ -37,6 +37,7 @@
 - [Function Functions 相关源码拾遗 (2016-10-14)](https://github.com/hanzichi/underscore-analysis/issues/24)
 - [浅谈 Web 中前后端模板引擎的使用 (2016-10-30)](https://github.com/hanzichi/underscore-analysis/issues/25)
 - [Underscore _.template 方法使用详解 (2016-10-31)](https://github.com/hanzichi/underscore-analysis/issues/26)
+- [Underscore 整体架构浅析 (2016-11-01)](https://github.com/hanzichi/underscore-analysis/issues/27)
 
 
 
