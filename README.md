@@ -2,8 +2,8 @@
 
 ### Notice
 
-- 如果您觉得该 Repo 让您有所收获，请点击右上角的 **Star** 支持楼主
-- 如果您想持续关注楼主的最新系列解读文章，请点击右上角的 **Watch** 订阅
+- 如果您觉得该 Repo 让您有所收获，请点击右上角的「**Star** 」支持楼主
+- 如果您想持续关注楼主的最新系列解读文章，请点击右上角的「**Watch**」订阅
 
 
 ### Main
@@ -38,6 +38,7 @@
 - [浅谈 Web 中前后端模板引擎的使用 (2016-10-30)](https://github.com/hanzichi/underscore-analysis/issues/25)
 - [Underscore _.template 方法使用详解 (2016-10-31)](https://github.com/hanzichi/underscore-analysis/issues/26)
 - [Underscore 整体架构浅析 (2016-11-01)](https://github.com/hanzichi/underscore-analysis/issues/27)
+- [源码解读这半年(2016-11-02)](https://github.com/hanzichi/underscore-analysis/issues/28)
 
 
 
@@ -52,3 +53,4 @@
 - 2016-08-18 Star 500
 - 2016-09-28 Star 600
 - 2016-10-24 Star 700
+- ...
