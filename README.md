@@ -1,18 +1,24 @@
-# underscore-1.8.3.js 源码解读
+```
+▄• ▄▌ ▐ ▄ ·▄▄▄▄  ▄▄▄ .▄▄▄  .▄▄ ·  ▄▄·       ▄▄▄  ▄▄▄ . ▄▄▄·  ▐ ▄  ▄▄▄· ▄▄▌   ▄· ▄▌.▄▄ · ▪  .▄▄ ·
+█▪██▌•█▌▐███▪ ██ ▀▄.▀·▀▄ █·▐█ ▀. ▐█ ▌▪▪     ▀▄ █·▀▄.▀·▐█ ▀█ •█▌▐█▐█ ▀█ ██•  ▐█▪██▌▐█ ▀. ██ ▐█ ▀.
+█▌▐█▌▐█▐▐▌▐█· ▐█▌▐▀▀▪▄▐▀▀▄ ▄▀▀▀█▄██ ▄▄ ▄█▀▄ ▐▀▀▄ ▐▀▀▪▄▄█▀▀█ ▐█▐▐▌▄█▀▀█ ██▪  ▐█▌▐█▪▄▀▀▀█▄▐█·▄▀▀▀█▄
+▐█▄█▌██▐█▌██. ██ ▐█▄▄▌▐█•█▌▐█▄▪▐█▐███▌▐█▌.▐▌▐█•█▌▐█▄▄▌▐█ ▪▐▌██▐█▌▐█ ▪▐▌▐█▌▐▌ ▐█▀·.▐█▄▪▐█▐█▌▐█▄▪▐█
+ ▀▀▀ ▀▀ █▪▀▀▀▀▀•  ▀▀▀ .▀  ▀ ▀▀▀▀ ·▀▀▀  ▀█▄▀▪.▀  ▀ ▀▀▀  ▀  ▀ ▀▀ █▪ ▀  ▀ .▀▀▀   ▀ •  ▀▀▀▀ ▀▀▀ ▀▀▀▀
+```
 
-### Notice
+## Notice
 
 - 如果您觉得该 Repo 让您有所收获，请点击右上角的「**Star** 」支持楼主
 - 如果您想持续关注楼主的最新系列解读文章，请点击右上角的「**Watch**」订阅
 
 
-### Main
+## Source
 
 - [underscore-1.8.3.js 源码](https://github.com/hanzichi/underscore-analysis/blob/master/underscore-1.8.3.js/src/underscore-1.8.3.js)
 - [underscore-1.8.3.js 源码解读全文注释版](https://github.com/hanzichi/underscore-analysis/blob/master/underscore-1.8.3.js/underscore-1.8.3-analysis.js)
 
 
-### Articles（源码分析过程中的产物）
+## Article
 
 - [为什么用「void 0」代替「undefined」(2016-05-16)](https://github.com/hanzichi/underscore-analysis/issues/1)
 - [常用类型判断以及一些有用的工具方法 (2016-05-21)](https://github.com/hanzichi/underscore-analysis/issues/2)
