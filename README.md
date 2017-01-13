@@ -45,3 +45,8 @@
 - [Underscore _.template 方法使用详解 (2016-10-31)](https://github.com/hanzichi/underscore-analysis/issues/26)
 - [Underscore 整体架构浅析 (2016-11-01)](https://github.com/hanzichi/underscore-analysis/issues/27)
 - [源码解读这半年(2016-11-02)](https://github.com/hanzichi/underscore-analysis/issues/28)
+
+
+## License
+
+MIT
