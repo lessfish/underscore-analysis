@@ -1,4 +1,4 @@
-# :eyes: underscore analysis
+# :eyes: Underscore Analysis
 
 ## Todo
 
