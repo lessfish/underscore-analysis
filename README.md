@@ -1,11 +1,5 @@
 # :eyes: Underscore Analysis
 
-## Todo
-
-GitHub issue 的 markdown 渲染出现问题了？
-
-确定文中如果有引用 Underscore 的全局变量 `_` 都转义了（`\_`），但是现在（2017.02.10）一看好像转移符都被吃掉了？
-
 
 ## Notice
 
@@ -46,6 +40,13 @@ GitHub issue 的 markdown 渲染出现问题了？
 - [Underscore _.template 方法使用详解 (2016-10-31)](https://github.com/hanzichi/underscore-analysis/issues/26)
 - [Underscore 整体架构浅析 (2016-11-01)](https://github.com/hanzichi/underscore-analysis/issues/27)
 - [源码解读这半年(2016-11-02)](https://github.com/hanzichi/underscore-analysis/issues/28)
+
+
+## Todo
+
+GitHub issue 的 markdown 渲染出现问题了？
+
+确定文中如果有引用 Underscore 的全局变量 `_` 都转义了（`\_`），但是现在（2017.02.10）一看好像转移符都被吃掉了？
 
 
 ## License
