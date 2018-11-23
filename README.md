@@ -1,5 +1,11 @@
 # :eyes: Underscore Analysis
 
+## 个人公众号
+
+欢迎关注我的个人公众号，不定期分享工作中的偷懒小技巧～
+
+![](https://ws2.sinaimg.cn/large/006tNbRwly1fxeibvj2xoj30760760t6.jpg)
+
 
 ## Notice
 
