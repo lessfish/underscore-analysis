@@ -1,9 +1,5 @@
 # :eyes: Underscore Analysis
 
-## 个人公众号
-
-欢迎关注我的个人公众号「码农随手记」
-
 ## Notice
 
 - 如果您觉得该 Repo 让您有所收获，请点击右上角的「**Star** 」支持楼主
